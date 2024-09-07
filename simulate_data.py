@@ -57,30 +57,29 @@ def simulate_CSTR(
 
 
 def online_ctrl_Tc(
+    controller: PIDController,
     current_Ca: float = 0.87725294608097,
     current_T: float = 324.475443431599,
     current_Tc: float = 300,
     ideal_Ca: float = 0.8,
     ideal_T: float = 330,
     noise: float = 0.1,
-    **kwargs
-):
+) -> tuple[float]:
+    delta_Tc = controller.compute(
+        ideal_ys=(ideal_Ca, ideal_T), realistic_ys=(current_Ca, current_T)
+    )
+    new_Tc = current_Tc + delta_Tc
 
     y = odeint(
         func=cstr,
         y0=(current_Ca, current_T),
         t=[0, 1],
-        args=(current_Tc,),
+        args=(new_Tc,),
     )
 
-    new_Ca = y[-1][0] + noise * np.random.uniform(low=-1, high=1, size=1) * 0.1
-    new_T = y[-1][1] + noise * np.random.uniform(low=-1, high=1, size=1) * 5
+    new_Ca = y[-1][0] + noise * np.random.uniform(low=-1, high=1, size=1).item() * 0.1
+    new_T = y[-1][1] + noise * np.random.uniform(low=-1, high=1, size=1).item() * 5
 
-    # calculate error
+    return (new_Ca, new_T, new_Tc, 0.01)
 
-    Ca_error = new_Ca - current_Ca
-    T_error = new_T - current_T
 
-    PIDController()
-
-    return None

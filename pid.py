@@ -14,12 +14,12 @@ class PIDController:
         self.prev_error = [0] * len(self.Kps)
         self.integral = [0] * len(self.Kps)
 
-    def compute(self, ideal_ys: list[float], realistic_ys: list[float]):
+    def compute(self, ideal_ys: tuple[float], realistic_ys: tuple[float]):
         output = 0
         for idx, (ideal_y, realistic_y) in enumerate(zip(ideal_ys, realistic_ys)):
             error = ideal_y - realistic_y
             self.integral[idx] += error
-            derivative = error - self.prev_error
+            derivative = error - self.prev_error[idx]
             output += (
                 self.Kps[idx] * error
                 + self.Kis[idx] * self.integral[idx]
