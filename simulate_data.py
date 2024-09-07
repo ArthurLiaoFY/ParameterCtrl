@@ -63,11 +63,18 @@ def online_ctrl_Tc(
     current_Tc: float = 300,
     ideal_Ca: float = 0.8,
     ideal_T: float = 330,
+    upper_Tc: float = 305,
+    lower_Tc: float = 295,
     noise: float = 0.1,
 ) -> tuple[float]:
-    delta_Tc = controller.compute(
-        ideal_ys=(ideal_Ca, ideal_T), realistic_ys=(current_Ca, current_T)
+    delta_Tc = np.clip(
+        a=controller.compute(
+            ideal_ys=(ideal_Ca, ideal_T), realistic_ys=(current_Ca, current_T)
+        ),
+        a_max=upper_Tc - current_Tc,
+        a_min=lower_Tc - current_Tc,
     )
+
     new_Tc = current_Tc + delta_Tc
 
     y = odeint(
@@ -80,6 +87,4 @@ def online_ctrl_Tc(
     new_Ca = y[-1][0] + noise * np.random.uniform(low=-1, high=1, size=1).item() * 0.1
     new_T = y[-1][1] + noise * np.random.uniform(low=-1, high=1, size=1).item() * 5
 
-    return (new_Ca, new_T, new_Tc, 0.01)
-
-
+    return (new_Ca, new_T, new_Tc, delta_Tc)
