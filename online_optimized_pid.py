@@ -30,14 +30,11 @@ lower_Tc = float(config["experiment"]["lower_Tc"])
 Ca_l = [current_Ca]
 T_l = [current_T]
 Tc_l = [current_Tc]
-loss_f_l = []
+
 
 for i in range(int(config["experiment"]["experiment_step"])):
     pre_delta_Tc = 0
-    if i // float(config["optimize"]["optimize_step"]) == 0:
-        if i != 0:
-            loss_f_l.append(loss_f)
-        loss_f = 0
+    loss_f = 0
 
     current_Ca, current_T, current_Tc, delta_Tc = online_ctrl_Tc(
         controller=pid_controller,
@@ -75,11 +72,6 @@ plt.show()
 plt.plot(Tc_l)
 plt.plot([upper_Tc] * len(Tc_l), "--", color="r")
 plt.plot([lower_Tc] * len(Tc_l), "--", color="r")
-
-plt.show()
-
-plt.plot(loss_f_l, "o-")
-plt.plot([0.0] * len(loss_f_l))
 
 plt.show()
 
