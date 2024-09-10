@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from config import lower_Tc, upper_Tc
 
 
 def plot_simulation(Ca_array: np.ndarray, T_array: np.ndarray, tc_trace: list):
@@ -28,7 +29,9 @@ def plot_simulation(Ca_array: np.ndarray, T_array: np.ndarray, tc_trace: list):
     plt.xlim(min(t), max(t))
 
     plt.subplot(3, 1, 3)
-    plt.plot(t, tc_trace, "b--", lw=3)
+    plt.plot(t, tc_trace, "b--", lw=1)
+    plt.plot(t, [lower_Tc for _ in range(len(tc_trace))], "r--", lw=1)
+    plt.plot(t, [upper_Tc for _ in range(len(tc_trace))], "r--", lw=1)
     plt.ylabel("Cooling T (K)")
     plt.xlabel("Time (min)")
     plt.legend(["Jacket Temperature"], loc="best")
