@@ -2,7 +2,7 @@ import copy
 
 from scipy.integrate import odeint
 
-from cstr_model import cstr, np
+from cstr_env import cstr, np
 
 
 def simulate_CSTR(

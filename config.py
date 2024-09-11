@@ -24,3 +24,13 @@ q_learning_kwargs = {
     "discount_factor": 0.99,
     "fully_explore_step": 0,
 }
+
+# Env
+env_kwargs = {
+    "init_Ca": 0.87725294608097,
+    "init_T": 324.475443431599,
+    "init_Tc": 300.0,
+    "ideal_Ca": 0.8,
+    "ideal_T": 320,
+    "noise": 0.1,
+}

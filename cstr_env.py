@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.integrate import odeint
 
 ###############
 #  CSTR model #
@@ -48,3 +49,55 @@ def cstr(x, t, u):
 
     # == Return == #
     return dCadt, dTdt
+
+
+class CSTREnv:
+    def __init__(self, **kwargs) -> None:
+        self.__dict__.update(**kwargs)
+        self.reset()
+
+    def reset(self):
+        self.state = {
+            "current_Ca": self.init_Ca // 0.01 / 100,
+            "current_T": self.init_T // 0.01 / 100,
+            "current_Tc": self.init_Tc // 0.01 / 100,
+            "ideal_Ca": self.ideal_Ca,
+            "ideal_T": self.ideal_T,
+        }
+        self.Ca_traj = np.array([self.init_Ca])
+        self.T_traj = np.array([self.init_T])
+        self.Tc_traj = np.array([self.init_Tc])
+
+    def step(self, action: float):
+        # going on to the new state and calculate reward
+        y = odeint(
+            func=cstr,
+            y0=(self.Ca_traj[-1].item(), self.T_traj[-1].item()),
+            t=[0, 1],  # 1 time frame later
+            args=(self.Tc_traj[-1].item(),),
+        )
+
+        new_Ca = y[-1][0] + self.noise * np.random.uniform(low=-1, high=1, size=1) * 0.1
+        new_T = y[-1][1] + self.noise * np.random.uniform(low=-1, high=1, size=1) * 5
+        new_Tc = self.Tc_traj[-1].item() + action
+
+        reward = (
+            -1
+            * (
+                100 * (self.ideal_Ca - new_Ca) / self.ideal_Ca
+                + 100 * (self.ideal_T - new_T) / self.ideal_T
+            )
+            ** 2
+        )
+
+        # update state
+
+        self.state = {
+            "current_Ca": new_Ca // 0.01 / 100,
+            "current_T": new_T // 0.01 / 100,
+            "current_Tc": new_Tc // 0.01 / 100,
+            "ideal_Ca": self.ideal_Ca,
+            "ideal_T": self.ideal_T,
+        }
+
+        return reward
