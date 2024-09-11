@@ -68,7 +68,7 @@ class CSTREnv:
         self.T_traj = np.array([self.init_T])
         self.Tc_traj = np.array([self.init_Tc])
 
-    def step(self, action: float):
+    def step(self, action: float, return_xy: bool = False):
         # going on to the new state and calculate reward
         y = odeint(
             func=cstr,
@@ -83,13 +83,15 @@ class CSTREnv:
         new_T = (
             y[-1][1] + self.noise * np.random.uniform(low=-1, high=1, size=1) * 5
         ).item()
-        new_Tc = self.Tc_traj[-1].item() + action
+        new_Tc = np.clip(
+            a=self.Tc_traj[-1].item() + action, a_max=self.upper_Tc, a_min=self.lower_Tc
+        )
 
         reward = (
             -1
             * (
-                100 * (self.ideal_Ca - new_Ca) / self.ideal_Ca
-                + 100 * (self.ideal_T - new_T) / self.ideal_T
+                (self.ideal_Ca - new_Ca) / self.ideal_Ca
+                + (self.ideal_T - new_T) / self.ideal_T
             )
             ** 2
         )
@@ -103,5 +105,7 @@ class CSTREnv:
             "ideal_Ca": self.ideal_Ca,
             "ideal_T": self.ideal_T,
         }
-
-        return reward
+        if return_xy:
+            return (reward, new_Ca, new_T, new_Tc)
+        else:
+            return reward
