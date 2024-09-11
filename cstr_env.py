@@ -64,17 +64,17 @@ class CSTREnv:
             "ideal_Ca": self.ideal_Ca,
             "ideal_T": self.ideal_T,
         }
-        self.Ca_traj = np.array([self.init_Ca])
-        self.T_traj = np.array([self.init_T])
-        self.Tc_traj = np.array([self.init_Tc])
+        self.Ca_traj = [self.init_Ca]
+        self.T_traj = [self.init_T]
+        self.Tc_traj = [self.init_Tc]
 
     def step(self, action: float, return_xy: bool = False):
         # going on to the new state and calculate reward
         y = odeint(
             func=cstr,
-            y0=(self.Ca_traj[-1].item(), self.T_traj[-1].item()),
+            y0=(self.Ca_traj[-1], self.T_traj[-1]),
             t=[0, 1],  # 1 time frame later
-            args=(self.Tc_traj[-1].item(),),
+            args=(self.Tc_traj[-1],),
         )
 
         new_Ca = (
@@ -84,16 +84,12 @@ class CSTREnv:
             y[-1][1] + self.noise * np.random.uniform(low=-1, high=1, size=1) * 5
         ).item()
         new_Tc = np.clip(
-            a=self.Tc_traj[-1].item() + action, a_max=self.upper_Tc, a_min=self.lower_Tc
+            a=self.Tc_traj[-1] + action, a_max=self.upper_Tc, a_min=self.lower_Tc
         )
 
-        reward = (
-            -1
-            * (
-                (self.ideal_Ca - new_Ca) / self.ideal_Ca
-                + (self.ideal_T - new_T) / self.ideal_T
-            )
-            ** 2
+        reward = -100 * (
+            abs((self.ideal_Ca - new_Ca) / self.ideal_Ca)
+            + abs((self.ideal_T - new_T) / self.ideal_T)
         )
 
         # update state
@@ -105,6 +101,11 @@ class CSTREnv:
             "ideal_Ca": self.ideal_Ca,
             "ideal_T": self.ideal_T,
         }
+
+        self.Ca_traj.append(new_Ca)
+        self.T_traj.append(new_T)
+        self.Tc_traj.append(new_Tc)
+
         if return_xy:
             return (reward, new_Ca, new_T, new_Tc)
         else:

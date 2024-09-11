@@ -20,13 +20,12 @@ class TrainCSTRAgent:
         self.max_total_reward = -np.inf
         self.rewards = []
 
-    def train_agent(self):
+    def train_agent(self, plot_reward_trend: bool = False):
         """
         train agent on env
         """
         for episode in range(self.n_episodes):
             self.env.reset()
-            self.agent.shutdown_explore
             total_reward = 0
 
             for _ in range(self.step_per_episode):
@@ -53,6 +52,8 @@ class TrainCSTRAgent:
                 print(
                     f"Episode {episode}/{self.n_episodes}: Total reward : {total_reward}"
                 )
+        if plot_reward_trend:
+            self.plot_reward_trend()
 
     def valid_agent(self):
         """
@@ -129,5 +130,5 @@ class TrainCSTRAgent:
 
 tcstra = TrainCSTRAgent(**training_kwargs)
 
-tcstra.train_agent()
+tcstra.train_agent(plot_reward_trend=True)
 tcstra.valid_agent()
