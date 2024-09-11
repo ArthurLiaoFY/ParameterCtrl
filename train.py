@@ -4,7 +4,6 @@ import plotly.graph_objects as go
 from agent import Agent
 from config import training_kwargs
 from cstr_env import CSTREnv, np
-from plot_fns import plot_validation_result
 
 
 class TrainCSTRAgent:
@@ -55,39 +54,6 @@ class TrainCSTRAgent:
         if plot_reward_trend:
             self.plot_reward_trend()
 
-    def valid_agent(self):
-        """
-        validate agent on env
-        """
-        valid_reward_trend = []
-        valid_Ca_trend = []
-        valid_T_trend = []
-        valid_Tc_trend = []
-
-        self.env.reset()
-        self.agent.shutdown_explore
-        for _ in range(self.step_per_episode):
-            state = self.env.state.copy()
-            action_idx = self.agent.select_action_idx(
-                state_tuple=tuple(v for v in state.values())
-            )
-            action = self.agent.action_idx_to_action(action_idx=action_idx)
-            reward, new_Ca, new_T, new_Tc = self.env.step(action=action, return_xy=True)
-            valid_reward_trend.append(reward)
-            valid_Ca_trend.append(new_Ca)
-            valid_T_trend.append(new_T)
-            valid_Tc_trend.append(new_Tc)
-
-        plot_validation_result(
-            Ca_trend=valid_Ca_trend,
-            T_trend=valid_T_trend,
-            Tc_trend=valid_Tc_trend,
-            ideal_Ca=self.env_kwargs.get("ideal_Ca"),
-            ideal_T=self.env_kwargs.get("ideal_T"),
-            upper_Tc=self.env_kwargs.get("upper_Tc"),
-            lower_Tc=self.env_kwargs.get("lower_Tc"),
-        )
-
     def save_table(
         self,
         file_path: str = ".",
@@ -98,17 +64,6 @@ class TrainCSTRAgent:
         self.agent.save_table(
             file_path=file_path, prefix=prefix, suffix=suffix, table_name=table_name
         )
-
-    def load_table(
-        self,
-        file_path: str = ".",
-        prefix: str = "",
-        suffix: str = "",
-        table_name: str = "q_table",
-    ):
-        self.agent.q_table = np.load(
-            f"{file_path}/{prefix}{table_name}{suffix}.npy", allow_pickle=True
-        ).item()
 
     def plot_reward_trend(
         self,
@@ -131,4 +86,4 @@ class TrainCSTRAgent:
 tcstra = TrainCSTRAgent(**training_kwargs)
 
 tcstra.train_agent(plot_reward_trend=True)
-tcstra.valid_agent()
+tcstra.save_table(prefix="CSTR_")
