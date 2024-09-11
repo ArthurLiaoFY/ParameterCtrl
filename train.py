@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy.integrate import odeint
 
-from config import env_kwargs, q_learning_kwargs
+from config import env_kwargs, experiment_step, q_learning_kwargs
 from cstr_env import CSTREnv, np
 from q_agent import Agent
 
@@ -19,18 +19,13 @@ rewards = []
 
 max_total_reward = -np.inf
 
-max_step = 500
 
 for episode in range(n_episodes):
-    step_cnt = 0
     env.reset()
     total_reward = 0
-    while (
-        env.current_unprocessed_amount + env.current_head_queued > 0
-        and step_cnt <= max_step
-    ):
 
-        state = env.eqp_state.copy()
+    for _ in range(experiment_step):
+        state = env.state.copy()
         action_idx = agent.select_action_idx(
             state_tuple=tuple(v for v in state.values())
         )
@@ -41,27 +36,19 @@ for episode in range(n_episodes):
             state_tuple=tuple(v for v in state.values()),
             action_idx=action_idx,
             reward=reward,
-            next_state_tuple=tuple(v for v in env.eqp_state.values()),
+            next_state_tuple=tuple(v for v in env.state.values()),
         )
 
         total_reward += reward
-        step_cnt += 1
     agent.update_lr_er(episode=episode)
     rewards.append(total_reward)
     if total_reward > max_total_reward:
         # print
         max_total_reward = total_reward
-        print(
-            f"Episode {episode}/{n_episodes}: Total reward : {total_reward}, Step: {step_cnt}"
-        )
+        print(f"Episode {episode}/{n_episodes}: Total reward : {total_reward}")
 
 
-agent.save_table(
-    prefix="single_machine_v2"
-    + f"_feeding_speed_{eqp_kwargs.get('feeding_speed')}"
-    + f"_shipping_speed_{eqp_kwargs.get('shipping_speed')}"
-    + "_"
-)
+agent.save_table(prefix="test_")
 
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=np.arange(len(rewards)), y=rewards, mode="lines+markers"))

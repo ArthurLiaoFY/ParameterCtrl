@@ -77,8 +77,12 @@ class CSTREnv:
             args=(self.Tc_traj[-1].item(),),
         )
 
-        new_Ca = y[-1][0] + self.noise * np.random.uniform(low=-1, high=1, size=1) * 0.1
-        new_T = y[-1][1] + self.noise * np.random.uniform(low=-1, high=1, size=1) * 5
+        new_Ca = (
+            y[-1][0] + self.noise * np.random.uniform(low=-1, high=1, size=1) * 0.1
+        ).item()
+        new_T = (
+            y[-1][1] + self.noise * np.random.uniform(low=-1, high=1, size=1) * 5
+        ).item()
         new_Tc = self.Tc_traj[-1].item() + action
 
         reward = (
