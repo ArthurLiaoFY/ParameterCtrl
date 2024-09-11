@@ -14,7 +14,7 @@ class ValidateCSTRAgent:
         self.reset()
 
     def reset(self):
-        self.env = CSTREnv(**self.env_kwargs)
+        self.env = CSTREnv(seed=1122, **self.env_kwargs)
         self.agent = Agent(**self.q_learning_kwargs)
 
         self.max_total_reward = -np.inf
@@ -24,10 +24,10 @@ class ValidateCSTRAgent:
         """
         validate agent on env
         """
-        valid_reward_trend = []
-        valid_Ca_trend = []
-        valid_T_trend = []
-        valid_Tc_trend = []
+        valid_reward_trend = [None]
+        valid_Ca_trend = [self.env_kwargs.get("init_Ca")]
+        valid_T_trend = [self.env_kwargs.get("init_T")]
+        valid_Tc_trend = [self.env_kwargs.get("init_Tc")]
 
         self.env.reset()
         self.agent.shutdown_explore

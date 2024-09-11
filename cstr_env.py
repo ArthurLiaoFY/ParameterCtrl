@@ -52,7 +52,11 @@ def cstr(x, t, u):
 
 
 class CSTREnv:
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, seed: int | None = None, **kwargs) -> None:
+        if seed is None:
+            self.seed = np.random
+        else :
+            self.seed = np.random.RandomState(seed)
         self.__dict__.update(**kwargs)
         self.reset()
 
@@ -78,10 +82,10 @@ class CSTREnv:
         )
 
         new_Ca = (
-            y[-1][0] + self.noise * np.random.uniform(low=-1, high=1, size=1) * 0.1
+            y[-1][0] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 0.1
         ).item()
         new_T = (
-            y[-1][1] + self.noise * np.random.uniform(low=-1, high=1, size=1) * 5
+            y[-1][1] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 5
         ).item()
         new_Tc = np.clip(
             a=self.Tc_traj[-1] + action, a_max=self.upper_Tc, a_min=self.lower_Tc
@@ -94,13 +98,13 @@ class CSTREnv:
 
         # update state
 
-        self.state = {
-            "current_Ca": new_Ca // 0.01 / 100,
-            "current_T": new_T // 0.01 / 100,
-            "current_Tc": new_Tc // 0.01 / 100,
-            "ideal_Ca": self.ideal_Ca,
-            "ideal_T": self.ideal_T,
-        }
+        self.state.update(
+            {
+                "current_Ca": new_Ca // 0.01 / 100,
+                "current_T": new_T // 0.01 / 100,
+                "current_Tc": new_Tc // 0.01 / 100,
+            }
+        )
 
         self.Ca_traj.append(new_Ca)
         self.T_traj.append(new_T)
