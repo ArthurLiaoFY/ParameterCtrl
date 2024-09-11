@@ -12,8 +12,7 @@ experiment_step = 10
 
 q_learning_kwargs = {
     "action_mapping_dict": {
-        idx: action
-        for idx, action in enumerate([0, -3, -1, -0.5, -0.2, 0.2, 0.5, 1, 3])
+        idx: action for idx, action in enumerate([0, -3, -1, -0.2, 0.2, 1, 3])
     },
     # -------------------------------
     "learning_rate": 0.1,
