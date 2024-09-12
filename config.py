@@ -23,8 +23,8 @@ env_kwargs = {
     "ideal_Ca": 0.92,
     "ideal_T": 319.0,
     "noise": 0.1,
-    "upper_Tc": 305.0,
-    "lower_Tc": 295.0,
+    "upper_Tc": 310.0,
+    "lower_Tc": 250.0,
 }
 
 # Train
