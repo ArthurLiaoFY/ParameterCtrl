@@ -62,9 +62,9 @@ class CSTREnv:
 
     def reset(self):
         self.state = {
-            "current_Ca": self.init_Ca // 0.01 / 100,
-            "current_T": self.init_T // 0.01 / 100,
-            "current_Tc": self.init_Tc // 0.01 / 100,
+            "current_Ca": self.init_Ca * 10000 // 1,
+            "current_T": self.init_T * 10000 // 1,
+            "current_Tc": self.init_Tc * 1000 // 1,
             "ideal_Ca": self.ideal_Ca,
             "ideal_T": self.ideal_T,
         }
@@ -74,7 +74,9 @@ class CSTREnv:
 
     def step(self, action: float, return_xy: bool = False):
         new_Tc = np.clip(
-            a=self.Tc_traj[-1] + action, a_max=self.upper_Tc, a_min=self.lower_Tc
+            a=self.Tc_traj[-1] + action,
+            a_max=self.upper_Tc,
+            a_min=self.lower_Tc,
         )
 
         # going on to the new state and calculate reward
@@ -92,17 +94,17 @@ class CSTREnv:
             y[-1][1] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 5
         ).item()
 
-        reward = -100 * (
-            abs(self.ideal_Ca - new_Ca) / self.ideal_Ca
-            + abs(self.ideal_T - new_T) / self.ideal_T
+        reward = -1000 * (
+            abs((self.ideal_Ca - new_Ca) / self.ideal_Ca)
+            + abs((self.ideal_T - new_T) / self.ideal_T)
         )
 
         # update state
 
         self.state = {
-            "current_Ca": new_Ca // 0.01 / 100,
-            "current_T": new_T // 0.01 / 100,
-            "current_Tc": new_Tc // 0.01 / 100,
+            "current_Ca": new_Ca * 10000 // 1,
+            "current_T": new_T * 10000 // 1,
+            "current_Tc": new_Tc * 1000 // 1,
             "ideal_Ca": self.ideal_Ca,
             "ideal_T": self.ideal_T,
         }
