@@ -19,12 +19,12 @@ q_learning_kwargs = {
 env_kwargs = {
     "init_Ca": 0.87725294608097,
     "init_T": 324.475443431599,
-    "init_Tc": 300.0,
-    "ideal_Ca": 0.92,
-    "ideal_T": 319.0,
+    "init_Tc": 297.0,
+    "ideal_Ca": 0.9,
+    "ideal_T": 320.0,
     "noise": 0.1,
-    "upper_Tc": 310.0,
-    "lower_Tc": 250.0,
+    "upper_Tc": 300.0,
+    "lower_Tc": 290.0,
 }
 
 # Train
