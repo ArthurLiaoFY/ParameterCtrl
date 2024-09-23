@@ -73,12 +73,16 @@ class CSTREnv:
         self.Tc_traj = [self.init_Tc]
 
     def step(self, action: float, return_xy: bool = False):
+        new_Tc = np.clip(
+            a=self.Tc_traj[-1] + action, a_max=self.upper_Tc, a_min=self.lower_Tc
+        )
+
         # going on to the new state and calculate reward
         y = odeint(
             func=cstr,
             y0=(self.Ca_traj[-1], self.T_traj[-1]),
             t=[0, 1],  # 1 time frame later
-            args=(self.Tc_traj[-1],),
+            args=(new_Tc,),
         )
 
         new_Ca = (
@@ -87,13 +91,10 @@ class CSTREnv:
         new_T = (
             y[-1][1] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 5
         ).item()
-        new_Tc = np.clip(
-            a=self.Tc_traj[-1] + action, a_max=self.upper_Tc, a_min=self.lower_Tc
-        )
 
         reward = -100 * (
-            abs((self.ideal_Ca - new_Ca) / self.ideal_Ca)
-            + abs((self.ideal_T - new_T) / self.ideal_T)
+            abs(self.ideal_Ca - new_Ca) / self.ideal_Ca
+            + abs(self.ideal_T - new_T) / self.ideal_T
         )
 
         # update state
