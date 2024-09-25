@@ -1,7 +1,7 @@
 import plotly
 import plotly.graph_objects as go
 
-from agent import Agent
+from agent.q_table import Agent
 from config import training_kwargs
 from cstr_env import CSTREnv, np
 
