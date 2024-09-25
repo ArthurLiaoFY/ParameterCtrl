@@ -4,7 +4,6 @@ import plotly.graph_objects as go
 from agent import Agent
 from config import training_kwargs
 from cstr_env import CSTREnv, np
-from plot_fns import plot_validation_result
 
 
 class ValidateCSTRAgent:
@@ -26,8 +25,9 @@ class ValidateCSTRAgent:
         """
         valid_reward_trend = [None]
         valid_Ca_trend = [self.env_kwargs.get("init_Ca")]
-        valid_T_trend = [self.env_kwargs.get("init_T")]
-        valid_Tc_trend = [self.env_kwargs.get("init_Tc")]
+        valid_Cb_trend = [self.env_kwargs.get("init_Cb")]
+        valid_Tr_trend = [self.env_kwargs.get("init_Tr")]
+        valid_Tk_trend = [self.env_kwargs.get("init_Tk")]
 
         self.env.reset()
         self.agent.shutdown_explore
@@ -37,22 +37,14 @@ class ValidateCSTRAgent:
                 state_tuple=tuple(v for v in state.values())
             )
             action = self.agent.action_idx_to_action(action_idx=action_idx)
-            reward, new_Ca, new_T, new_Tc = self.env.step(action=action, return_xy=True)
+            reward, new_Ca, new_Cb, new_Tr, new_Tk, new_F, new_Q = self.env.step(
+                action=action, return_xy=True
+            )
             valid_reward_trend.append(reward)
             valid_Ca_trend.append(new_Ca)
-            valid_T_trend.append(new_T)
-            valid_Tc_trend.append(new_Tc)
-
-        plot_validation_result(
-            Ca_trend=valid_Ca_trend,
-            T_trend=valid_T_trend,
-            Tc_trend=valid_Tc_trend,
-            reward_trend=valid_reward_trend,
-            ideal_Ca=self.env_kwargs.get("ideal_Ca"),
-            ideal_T=self.env_kwargs.get("ideal_T"),
-            upper_Tc=self.env_kwargs.get("upper_Tc"),
-            lower_Tc=self.env_kwargs.get("lower_Tc"),
-        )
+            valid_Cb_trend.append(new_Cb)
+            valid_Tr_trend.append(new_Tr)
+            valid_Tk_trend.append(new_Tk)
 
     def load_table(
         self,

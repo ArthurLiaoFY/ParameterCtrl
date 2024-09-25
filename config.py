@@ -2,7 +2,13 @@
 q_learning_kwargs = {
     "action_mapping_dict": {
         idx: action
-        for idx, action in enumerate([0, -0.5, -0.2, -0.1, -0.05, 0.05, 0.1, 0.2, 0.5])
+        for idx, action in enumerate(
+            [
+                (act1, act2)
+                for act1 in [0, -20, -10, -2, 2, 10, 20]
+                for act2 in [0, -500, -100, -10, 10, 100, 500]
+            ]
+        )
     },
     # -------------------------------
     "learning_rate": 0.1,
@@ -17,14 +23,25 @@ q_learning_kwargs = {
 
 # Env
 env_kwargs = {
-    "init_Ca": 0.87725294608097,
-    "init_T": 324.475443431599,
-    "init_Tc": 297.0,
-    "ideal_Ca": 0.9,
-    "ideal_T": 320.0,
+    # ---------------
+    "init_Ca": 1.04,
+    "init_Cb": 0.8,
+    "init_Tr": 140.52,
+    "init_Tk": 139.10 ,
+    "init_F": 21.01,
+    "init_Q": -1234.44,
+    # ---------------
+    "ideal_Ca": 0.7,
+    "ideal_Cb": 0.6,
+    "ideal_Tr": 127.25,
+    "ideal_Tk": 124.39,
+    # ---------------
     "noise": 0.1,
-    "upper_Tc": 305.0,
-    "lower_Tc": 295.0,
+    # ---------------
+    "upper_F": 100.0,
+    "lower_F": 5.0,
+    "upper_Q": 0.0,
+    "lower_Q": -8500.0,
 }
 
 # Train
