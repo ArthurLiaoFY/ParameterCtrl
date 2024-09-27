@@ -149,10 +149,10 @@ class CSTREnv:
             y[-1][1] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 0.1
         ).item()
         new_Tr = (
-            y[-1][2] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 1.5
+            y[-1][2] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 5.0
         ).item()
         new_Tk = (
-            y[-1][3] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 1.5
+            y[-1][3] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 5.0
         ).item()
 
         reward = -1000 * (

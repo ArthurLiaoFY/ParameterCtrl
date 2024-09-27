@@ -27,14 +27,14 @@ env_kwargs = {
     "init_Ca": 1.04,
     "init_Cb": 0.8,
     "init_Tr": 140.52,
-    "init_Tk": 139.10 ,
+    "init_Tk": 139.10,
     "init_F": 21.01,
     "init_Q": -1234.44,
     # ---------------
     "ideal_Ca": 0.7,
-    "ideal_Cb": 0.6,
-    "ideal_Tr": 127.25,
-    "ideal_Tk": 124.39,
+    "ideal_Cb": 0.7,
+    "ideal_Tr": 127.0,
+    "ideal_Tk": 127.0,
     # ---------------
     "noise": 0.1,
     # ---------------
