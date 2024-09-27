@@ -2,9 +2,6 @@
 import torch
 from torchrl.data import ReplayBuffer
 
-# Re-tuned version of Deep Deterministic Policy Gradients
-# Paper: https://arxiv.org/abs/1509.02971
-
 
 class Actor(torch.nn.Module):
     def __init__(self, state_dim: int, action_dim: int):
@@ -35,6 +32,29 @@ class Critic(torch.nn.Module):
     def forward(self, state, action):
         return self.critic(
             torch.cat([state, action], 1),
+        )
+
+
+class ActorCritic(torch.nn.Module):
+    def __init__(self, state_dim: int, action_dim: int):
+        super(Critic, self).__init__()
+        self.backbone = torch.nn.Sequential(
+            torch.nn.Linear(state_dim + action_dim, 256),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256, 256),
+            torch.nn.ReLU(),
+        )
+        self.actor_head = torch.nn.Linear(256, action_dim)
+        self.critic_head = torch.nn.Linear(256, 1)
+
+    def actor_forward(self, state, action):
+        return self.actor_head(
+            self.backbone(torch.cat([state, action], 1)),
+        )
+
+    def critic_forward(self, state, action):
+        return self.critic_head(
+            self.backbone(torch.cat([state, action], 1)),
         )
 
 
@@ -78,6 +98,6 @@ class DDPG:
 
         # update critic by mse loss
 
-        # update actor by 
+        # update actor by
 
         # update the target networks
