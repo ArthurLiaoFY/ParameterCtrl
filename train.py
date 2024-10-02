@@ -129,7 +129,7 @@ class TrainDDPG:
         self.critic_loss = []
 
     def collect_buffer_data(self):
-        self.replay_buffer.add(state, action, next_state, reward, d)
+        # self.replay_buffer.add(state, action, next_state, reward)
         pass
 
     def train_ddpg(self, plot_reward_trend: bool = False):
