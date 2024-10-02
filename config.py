@@ -33,7 +33,8 @@ ddpg_kwargs = {
     "learning_rate_decay": 0.999,
     "explore_rate_decay": 0.999,
     "discount_factor": 0.99,
-    "buffer_size": 2000,
+    "buffer_size": 1e-5,
+    "scratch_dir": "./buffer_data",
 }
 
 # Env
