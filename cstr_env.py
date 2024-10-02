@@ -118,6 +118,7 @@ class CSTREnv:
         self.Q_traj = [self.init_Q]
 
     def step(self, action: tuple[float, float], return_xy: bool = False):
+        # new action
         new_F = np.clip(
             a=self.F_traj[-1] + action[0],
             a_max=self.upper_F,
@@ -129,7 +130,6 @@ class CSTREnv:
             a_min=self.lower_Q,
         )
 
-        # going on to the new state and calculate reward
         y = odeint(
             func=cstr_system,
             y0=(
@@ -142,6 +142,7 @@ class CSTREnv:
             args=([new_F, new_Q],),
         )
 
+        # new state
         new_Ca = (
             y[-1][0] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 0.1
         ).item()
@@ -155,6 +156,7 @@ class CSTREnv:
             y[-1][3] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 5.0
         ).item()
 
+        # reward
         reward = -1000 * (
             abs((self.ideal_Ca - new_Ca) / self.ideal_Ca)
             + abs((self.ideal_Cb - new_Cb) / self.ideal_Cb)
@@ -163,7 +165,6 @@ class CSTREnv:
         )
 
         # update state
-
         self.state = {
             # -------------------------
             "current_Ca": new_Ca,

@@ -1,10 +1,74 @@
+# %%
 import plotly
 import plotly.graph_objects as go
+from tensordict import TensorDict
+from torchrl.data import LazyTensorStorage
+from tqdm import tqdm
 
 from agent.actor_critic import Actor, ActorCritic, Critic, ReplayBuffer, torch
+from agent.ddpg import DDPG
 from agent.q_agent import Agent
 from config import training_kwargs
 from cstr_env import CSTREnv, np
+
+
+class CollectBufferData:
+    def __init__(self, **kwargs) -> None:
+        self.__dict__.update(**kwargs)
+        self.env = CSTREnv(**self.env_kwargs)
+
+        self.replay_buffer = ReplayBuffer(
+            storage=LazyTensorStorage(
+                max_size=self.ddpg_kwargs.get("buffer_size"),
+            )
+        )
+
+        try:
+            self.load_replay_buffer()
+
+        except FileNotFoundError:
+            pass
+
+    def extend_buffer_data(self, save: bool = True) -> None:
+        for _ in tqdm(range(self.n_episodes)):
+            self.env.reset()
+            state_list = []
+            action_list = []
+            reward_list = []
+            next_state_list = []
+
+            for _ in range(self.step_per_episode):
+                state_list.append(tuple(v for v in self.env.state.values()))
+                action = (
+                    np.random.uniform(low=5.0, high=100.0, size=1).item(),
+                    np.random.uniform(low=-8500, high=0.0, size=1).item(),
+                )
+                action_list.append(action)
+                reward_list.append(self.env.step(action=action))
+                next_state_list.append(tuple(v for v in self.env.state.values()))
+
+            self.replay_buffer.extend(
+                TensorDict(
+                    {
+                        "state": torch.Tensor(state_list),
+                        "action": torch.Tensor(action_list),
+                        "reward": torch.Tensor(reward_list),
+                        "next_state": torch.Tensor(next_state_list),
+                    },
+                    batch_size=[self.step_per_episode],
+                )
+            )
+
+        if save:
+            self.save_replay_buffer()
+
+    def save_replay_buffer(self) -> None:
+        self.replay_buffer.dumps(self.ddpg_kwargs.get("replay_buffer_dir"))
+        pass
+
+    def load_replay_buffer(self) -> None:
+        self.replay_buffer.loads(self.ddpg_kwargs.get("replay_buffer_dir"))
+        pass
 
 
 class TrainQAgent:
@@ -87,65 +151,22 @@ class TrainQAgent:
 class TrainDDPG:
     def __init__(self, **kwargs) -> None:
         self.__dict__.update(**kwargs)
+        self.ddpg = DDPG(**self.ddpg_kwargs)
 
-        self.env = CSTREnv(**self.env_kwargs)
+    def train_agent(self, replay_buffer: ReplayBuffer, plot_reward_trend: bool = False):
+        for episode in range(self.n_episodes):
+            self.env.reset()
+            total_reward = 0
 
-        self.actor = Actor(
-            self.ddpg_kwargs.get("state_dim"),
-            self.ddpg_kwargs.get("action_dim"),
-        )
-        self.actor_optimizer = torch.optim.Adam(
-            self.actor.parameters(),
-            lr=self.ddpg_kwargs.get("learning_rate"),
-        )
+            state = self.env.state.copy()
+            action = self.ddpg.actor(tuple(v for v in state.values()))
+            reward = self.env.step(action=action)
 
-        self.actor_prime = Actor(
-            self.ddpg_kwargs.get("state_dim"),
-            self.ddpg_kwargs.get("action_dim"),
-        )
-        self.actor_prime.load_state_dict(self.actor.state_dict())
-
-        self.critic = Critic(
-            self.ddpg_kwargs.get("state_dim"),
-            self.ddpg_kwargs.get("action_dim"),
-        )
-        self.critic_optimizer = torch.optim.Adam(
-            self.critic.parameters(),
-            lr=self.ddpg_kwargs.get("learning_rate"),
-        )
-
-        self.critic_prime = Critic(
-            self.ddpg_kwargs.get("state_dim"),
-            self.ddpg_kwargs.get("action_dim"),
-        )
-        self.critic_prime.load_state_dict(self.critic.state_dict())
-
-        self.replay_buffer = ReplayBuffer()
-
-        self.max_total_reward = -np.inf
-
-        self.rewards = []
-        self.actor_loss = []
-        self.critic_loss = []
-
-    def collect_buffer_data(self):
-        # self.replay_buffer.add(state, action, next_state, reward)
-        pass
-
-    def train_ddpg(self, plot_reward_trend: bool = False):
+            self.ddpg.train(
+                replay_buffer=replay_buffer,
+            )
         if plot_reward_trend:
             self.plot_reward_trend()
-
-    def save_table(
-        self,
-        file_path: str = ".",
-        prefix: str = "",
-        suffix: str = "",
-        table_name: str = "q_table",
-    ):
-        self.agent.save_table(
-            file_path=file_path, prefix=prefix, suffix=suffix, table_name=table_name
-        )
 
     def plot_reward_trend(
         self,
@@ -165,7 +186,24 @@ class TrainDDPG:
         )
 
 
-tcstra = TrainQAgent(**training_kwargs)
+# tcstra = TrainQAgent(**training_kwargs)
 
-tcstra.train_agent(plot_reward_trend=True)
-tcstra.save_table(prefix="CSTR_Q_")
+# tcstra.train_agent(plot_reward_trend=True)
+# tcstra.save_table(prefix="CSTR_Q_")
+
+# %%
+cbd = CollectBufferData(**training_kwargs)
+# cbd.extend_buffer_data()
+print(cbd.replay_buffer)
+# %%
+a = cbd.replay_buffer.sample(1)
+# %%
+print(
+    a["action"],
+    a["next_state"],
+    a["state"],
+    a["reward"],
+)
+
+
+# %%
