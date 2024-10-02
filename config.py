@@ -33,8 +33,8 @@ ddpg_kwargs = {
     "learning_rate_decay": 0.999,
     "explore_rate_decay": 0.999,
     "discount_factor": 0.99,
-    "buffer_size": 1e-5,
-    "scratch_dir": "./buffer_data",
+    "buffer_size": 1e7,
+    "replay_buffer_dir": "./buffer_data",
 }
 
 # Env
@@ -63,7 +63,7 @@ env_kwargs = {
 # Train
 
 training_kwargs = {
-    "n_episodes": 5000,
+    "n_episodes": 1000,
     "step_per_episode": 201,
     "env_kwargs": env_kwargs,
     "q_learning_kwargs": q_learning_kwargs,
