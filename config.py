@@ -23,7 +23,7 @@ q_learning_kwargs = {
 
 ddpg_kwargs = {
     # -------------------------------
-    "state_dim": 5,
+    "state_dim": 10,
     "action_dim": 2,
     # -------------------------------
     "learning_rate": 3e-4,
