@@ -1,4 +1,5 @@
 # %%
+import matplotlib.pyplot as plt
 import plotly
 import plotly.graph_objects as go
 from tensordict import TensorDict
@@ -40,8 +41,16 @@ class CollectBufferData:
             for _ in range(self.step_per_episode):
                 state_list.append(tuple(v for v in self.env.state.values()))
                 action = (
-                    np.random.uniform(low=5.0, high=100.0, size=1).item(),
-                    np.random.uniform(low=-8500, high=0.0, size=1).item(),
+                    np.random.uniform(
+                        low=self.env_kwargs.get("lower_F"),
+                        high=self.env_kwargs.get("upper_F"),
+                        size=1,
+                    ).item(),
+                    np.random.uniform(
+                        low=self.env_kwargs.get("lower_Q"),
+                        high=self.env_kwargs.get("upper_Q"),
+                        size=1,
+                    ).item(),
                 )
                 action_list.append(action)
                 reward_list.append(self.env.step(action=action))
@@ -151,31 +160,94 @@ class TrainQAgent:
 class TrainDDPG:
     def __init__(self, **kwargs) -> None:
         self.__dict__.update(**kwargs)
+        self.env = CSTREnv(**self.env_kwargs)
         self.ddpg = DDPG(**self.ddpg_kwargs)
+
+        self.max_total_reward = -np.inf
+
+        self.rewards_history = []
+        self.actor_loss_history = []
+        self.critic_loss_history = []
+
+    def inference_once(self):
+        self.env.reset()
+        inference_reward = 0
+
+        for step in range(self.step_per_episode):
+            action = self.ddpg.select_action(
+                state=torch.Tensor(tuple(v for v in self.env.state.values()))
+            )
+            inference_reward += self.env.step(action=action.detach().numpy())
+
+        print(f"inference_reward: {inference_reward}")
+        fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(15, 10), sharex=True)
+        axs[0, 0].plot(self.env.Ca_traj, "o-")
+        axs[0, 0].plot(
+            [self.env_kwargs.get("ideal_Ca") for _ in range(len(self.env.Ca_traj))]
+        )
+        axs[0, 0].set_title("Ca")
+
+        axs[0, 1].plot(self.env.Cb_traj, "o-")
+        axs[0, 1].plot(
+            [self.env_kwargs.get("ideal_Cb") for _ in range(len(self.env.Cb_traj))]
+        )
+        axs[0, 1].set_title("Cb")
+
+        axs[1, 0].plot(self.env.Tr_traj, "o-")
+        axs[1, 0].plot(
+            [self.env_kwargs.get("ideal_Tr") for _ in range(len(self.env.Tr_traj))]
+        )
+        axs[1, 0].set_title("Tr")
+
+        axs[1, 1].plot(self.env.Tk_traj, "o-")
+        axs[1, 1].plot(
+            [self.env_kwargs.get("ideal_Tk") for _ in range(len(self.env.Tk_traj))]
+        )
+        axs[1, 1].set_title("Tk")
+        fig.show()
+
+        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(15, 7), sharex=True)
+        ax1.plot(self.env.F_traj, "o-")
+        ax1.set_title("F")
+
+        ax2.plot(self.env.Q_traj, "o-")
+        ax2.set_title("Q dot")
+        fig.show()
 
     def train_agent(
         self,
         replay_buffer: ReplayBuffer,
-        batch_size: int = 256,
         plot_reward_trend: bool = False,
     ):
         for episode in range(self.n_episodes):
-            sample_batch = replay_buffer.sample(batch_size)
-            action_logit = self.ddpg.actor_prime(sample_batch.get("next_state"))
-            self.ddpg.critic_prime(
-                sample_batch.get("next_state"),
-                action_logit,
-            )
+            # Sample a random mini-batch of N transitions (si, ai, ri, si+1) from R
+            sample_batch = replay_buffer.sample(self.ddpg_kwargs.get("batch_size"))
+            actor_loss, critic_loss = self.ddpg.update_network(sample_batch)
 
-            # self.ddpg.train(
-            #     replay_buffer=replay_buffer,
-            # )
+            self.actor_loss_history.append(actor_loss.detach().numpy().item())
+            self.critic_loss_history.append(critic_loss.detach().numpy().item())
+            self.ddpg.update_lr()
+            if episode % 100 == 0:
+
+                self.ddpg.inference = True
+                print(
+                    f"start inference [{episode}], inference mode: ",
+                    self.ddpg.inference,
+                )
+                self.inference_once()
+                # return back to training mode
+                self.ddpg.inference = False
+                print(
+                    f"end of inference [{episode}], inference mode: ",
+                    self.ddpg.inference,
+                )
+
         if plot_reward_trend:
             self.plot_reward_trend()
 
     def plot_reward_trend(
         self,
-        file_path: str = ".",
+        file_path: str = "./plots",
         prefix: str = "",
         suffix: str = "",
         fig_name: str = "reward_trend",
@@ -183,7 +255,9 @@ class TrainDDPG:
         fig = go.Figure()
         fig.add_trace(
             go.Scatter(
-                x=np.arange(len(self.rewards)), y=self.rewards, mode="lines+markers"
+                x=np.arange(len(self.rewards_history)),
+                y=self.rewards_history,
+                mode="lines+markers",
             )
         )
         plotly.offline.plot(
@@ -199,15 +273,19 @@ class TrainDDPG:
 # %%
 cbd = CollectBufferData(**training_kwargs)
 # cbd.extend_buffer_data()
-print(cbd.replay_buffer)
-# # %%
-a = cbd.replay_buffer.sample(1)
-# # %%
-a.get("state")
+# print(cbd.replay_buffer)
 
 
 # %%
 tddpg = TrainDDPG(**training_kwargs)
-tddpg.train_agent(replay_buffer=cbd.replay_buffer)
+tddpg.train_agent(replay_buffer=cbd.replay_buffer, plot_reward_trend=True)
 
+# %%
+import matplotlib.pyplot as plt
+
+plt.plot(tddpg.critic_loss_history)
+plt.show()
+
+plt.plot(tddpg.actor_loss_history)
+plt.show()
 # %%

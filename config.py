@@ -26,11 +26,13 @@ ddpg_kwargs = {
     "state_dim": 10,
     "action_dim": 2,
     # -------------------------------
+    "batch_size": 256,
     "learning_rate": 3e-4,
     "learning_rate_min": 3e-5,
     "learning_rate_decay": 0.999,
     "discount_factor": 0.99,
     "tau": 0.001,
+    # -------------------------------
     "buffer_size": 1e7,
     "replay_buffer_dir": "./buffer_data",
 }
