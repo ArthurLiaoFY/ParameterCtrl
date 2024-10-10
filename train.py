@@ -153,18 +153,23 @@ class TrainDDPG:
         self.__dict__.update(**kwargs)
         self.ddpg = DDPG(**self.ddpg_kwargs)
 
-    def train_agent(self, replay_buffer: ReplayBuffer, plot_reward_trend: bool = False):
+    def train_agent(
+        self,
+        replay_buffer: ReplayBuffer,
+        batch_size: int = 256,
+        plot_reward_trend: bool = False,
+    ):
         for episode in range(self.n_episodes):
-            self.env.reset()
-            total_reward = 0
-
-            state = self.env.state.copy()
-            action = self.ddpg.actor(tuple(v for v in state.values()))
-            reward = self.env.step(action=action)
-
-            self.ddpg.train(
-                replay_buffer=replay_buffer,
+            sample_batch = replay_buffer.sample(batch_size)
+            action_logit = self.ddpg.actor_prime(sample_batch.get("next_state"))
+            self.ddpg.critic_prime(
+                sample_batch.get("next_state"),
+                action_logit,
             )
+
+            # self.ddpg.train(
+            #     replay_buffer=replay_buffer,
+            # )
         if plot_reward_trend:
             self.plot_reward_trend()
 
@@ -195,15 +200,14 @@ class TrainDDPG:
 cbd = CollectBufferData(**training_kwargs)
 # cbd.extend_buffer_data()
 print(cbd.replay_buffer)
-# %%
+# # %%
 a = cbd.replay_buffer.sample(1)
-# %%
-print(
-    a["action"],
-    a["next_state"],
-    a["state"],
-    a["reward"],
-)
+# # %%
+a.get("state")
 
+
+# %%
+tddpg = TrainDDPG(**training_kwargs)
+tddpg.train_agent(replay_buffer=cbd.replay_buffer)
 
 # %%
