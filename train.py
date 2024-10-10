@@ -204,7 +204,7 @@ class TrainDDPG:
             [self.env_kwargs.get("ideal_Tk") for _ in range(len(self.env.Tk_traj))]
         )
         axs[1, 1].set_title("Tk")
-        fig.show()
+        plt.show()
 
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(15, 7), sharex=True)
         ax1.plot(self.env.F_traj, "o-")
@@ -212,7 +212,7 @@ class TrainDDPG:
 
         ax2.plot(self.env.Q_traj, "o-")
         ax2.set_title("Q dot")
-        fig.show()
+        plt.show()
 
     def train_agent(
         self,
