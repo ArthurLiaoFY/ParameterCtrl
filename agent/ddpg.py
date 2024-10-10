@@ -8,32 +8,32 @@ class DDPG(object):
         self.__dict__.update(**kwargs)
 
         self.actor = Actor(
-            self.ddpg_kwargs.get("state_dim"),
-            self.ddpg_kwargs.get("action_dim"),
+            self.state_dim,
+            self.action_dim,
         )
         self.actor_optimizer = torch.optim.Adam(
             self.actor.parameters(),
-            lr=self.ddpg_kwargs.get("learning_rate"),
+            lr=self.learning_rate,
         )
 
         self.actor_prime = Actor(
-            self.ddpg_kwargs.get("state_dim"),
-            self.ddpg_kwargs.get("action_dim"),
+            self.state_dim,
+            self.action_dim,
         )
         self.actor_prime.load_state_dict(self.actor.state_dict())
 
         self.critic = Critic(
-            self.ddpg_kwargs.get("state_dim"),
-            self.ddpg_kwargs.get("action_dim"),
+            self.state_dim,
+            self.action_dim,
         )
         self.critic_optimizer = torch.optim.Adam(
             self.critic.parameters(),
-            lr=self.ddpg_kwargs.get("learning_rate"),
+            lr=self.learning_rate,
         )
 
         self.critic_prime = Critic(
-            self.ddpg_kwargs.get("state_dim"),
-            self.ddpg_kwargs.get("action_dim"),
+            self.state_dim,
+            self.action_dim,
         )
         self.critic_prime.load_state_dict(self.critic.state_dict())
 
@@ -49,7 +49,7 @@ class DDPG(object):
     def train(self, replay_buffer, batch_size=256):
         buffer = replay_buffer.sample(batch_size)
 
-        target_Q = buffer.get("reward") + self.discount * self.critic_prime(
+        target_Q = buffer.reward + self.discount * self.critic_prime(
             buffer.get("next_state"),
             self.actor_prime(buffer.get("next_state")),
         )

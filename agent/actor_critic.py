@@ -31,7 +31,10 @@ class Critic(torch.nn.Module):
 
     def forward(self, state, action):
         return self.critic(
-            torch.cat([state, action], 1),
+            torch.cat(
+                tensors=[state, action],
+                dim=1,
+            ),
         )
 
 
