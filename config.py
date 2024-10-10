@@ -33,6 +33,7 @@ ddpg_kwargs = {
     "learning_rate_decay": 0.999,
     "explore_rate_decay": 0.999,
     "discount_factor": 0.99,
+    "tau": 0.001,
     "buffer_size": 1e7,
     "replay_buffer_dir": "./buffer_data",
 }
