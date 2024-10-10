@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 
 import numpy as np
@@ -57,11 +58,13 @@ class Agent:
 
     def save_table(
         self,
-        file_path: str = ".",
+        file_path: str = "./agent/trained_agent",
         prefix: str = "",
         suffix: str = "",
         table_name: str = "q_table",
     ) -> None:
+        if not os.path.exists(file_path):
+            os.makedirs(file_path)
         np.save(
             f"{file_path}/{prefix}{table_name}{suffix}.npy",
             np.array(dict(self.q_table)),
@@ -69,12 +72,14 @@ class Agent:
 
     def load_table(
         self,
-        file_path: str = ".",
+        file_path: str = "./agent/trained_agent",
         prefix: str = "",
         suffix: str = "",
         table_name: str = "q_table",
     ) -> None:
-
-        self.q_table = np.load(
-            f"{file_path}/{prefix}{table_name}{suffix}.npy", allow_pickle=True
-        ).item()
+        try:
+            self.q_table = np.load(
+                f"{file_path}/{prefix}{table_name}{suffix}.npy", allow_pickle=True
+            ).item()
+        except FileNotFoundError:
+            raise "The model must be trained before calling 'load_table'"
