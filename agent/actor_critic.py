@@ -47,7 +47,7 @@ class ActorCritic(torch.nn.Module):
             torch.nn.Linear(256, 256),
             torch.nn.ReLU(),
         )
-        self.actor_head = torch.nn.Linear(256, action_dim)
+        self.actor_head = torch.tanh(torch.nn.Linear(256, action_dim))
         self.critic_head = torch.nn.Linear(256, 1)
 
     def actor_forward(self, state, action):
