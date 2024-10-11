@@ -67,25 +67,6 @@ def cstr_system(y, t, u):
     return dC_adt, dC_bdt, dT_Rdt, dT_Kdt
 
 
-# def cstr_env(
-#     Ca,
-#     Cb,
-#     Tr,
-#     Tk,
-#     F,
-#     Q_dot,
-#     t_start=0,
-#     t_end=1,
-#     num=5,
-# ):
-#     odeint(
-#         func=cstr_system,
-#         y0=(Ca, Cb, Tr, Tk),
-#         t=np.linspace(start=t_start, stop=t_end, num=num),
-#         args=((F, Q_dot)),
-#     )
-
-
 class CSTREnv:
     def __init__(self, seed: int | None = None, **kwargs) -> None:
         if seed is None:
