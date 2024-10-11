@@ -8,6 +8,7 @@ class DDPG(object):
     def __init__(self, inference: bool = False, **kwargs) -> None:
         self.inference = inference
         self.__dict__.update(**kwargs)
+        self.jitter_noise = self.ddpg_kwargs.get("jitter_noise")
         self.actor = Actor(
             self.state_dim,
             self.action_dim,
@@ -42,7 +43,15 @@ class DDPG(object):
             self.critic_prime.load_state_dict(self.critic.state_dict())
 
     def select_action(self, state: torch.Tensor):
-        return self.actor(state).detach().numpy()
+        if self.inference:
+            return self.actor(state).detach().numpy()
+        else:
+            self.jitter_noise *= self.ddpg_kwargs.get("jitter_noise_decay_factor")
+            return (
+                self.actor(state).detach().numpy()
+                * np.random.randn()
+                * self.jitter_noise
+            )
 
     def update_network(self, sample_batch: TensorDict):
         # Set yi(next_action_score) = ri + γ * Q_prime(si + 1, µ_prime(si + 1 | θ ^ µ_prime) | θ ^ Q_prime)
