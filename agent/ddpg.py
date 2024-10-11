@@ -8,7 +8,7 @@ class DDPG(object):
     def __init__(self, inference: bool = False, **kwargs) -> None:
         self.inference = inference
         self.__dict__.update(**kwargs)
-        self.jitter_noise = self.ddpg_kwargs.get("jitter_noise")
+
         self.actor = Actor(
             self.state_dim,
             self.action_dim,
@@ -46,11 +46,10 @@ class DDPG(object):
         if self.inference:
             return self.actor(state).detach().numpy()
         else:
-            self.jitter_noise *= self.ddpg_kwargs.get("jitter_noise_decay_factor")
+            self.jitter_noise *= self.jitter_noise_decay_factor
             return (
                 self.actor(state).detach().numpy()
-                * np.random.randn()
-                * self.jitter_noise
+                + np.random.randn() * np.array([30, 2000]) * self.jitter_noise
             )
 
     def update_network(self, sample_batch: TensorDict):
@@ -58,7 +57,7 @@ class DDPG(object):
 
         next_action_score = sample_batch.get("reward")[
             :, None
-        ] + self.discount_factor * self.critic(
+        ] + self.discount_factor * self.critic_prime(
             sample_batch.get("next_state"),
             self.actor_prime(sample_batch.get("next_state")),
         )
@@ -112,7 +111,8 @@ class DDPG(object):
 
     def update_lr(self) -> None:
         self.learning_rate = max(
-            self.learning_rate_min, self.learning_rate * self.learning_rate_decay
+            self.learning_rate_min,
+            self.learning_rate * self.learning_rate_decay,
         )
 
     def save_networks(
