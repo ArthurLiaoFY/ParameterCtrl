@@ -103,41 +103,41 @@ class CSTREnv:
         return {
             # -------------------------
             "current_normed_Ca": (self.state.get("current_Ca") - self.ideal_Ca)
-            / self.init_Ca,
+            / abs(self.init_Ca),
             "current_normed_Cb": (self.state.get("current_Cb") - self.ideal_Cb)
-            / self.init_Cb,
+            / abs(self.init_Cb),
             "current_normed_Tr": (self.state.get("current_Tr") - self.ideal_Tr)
-            / self.init_Tr,
+            / abs(self.init_Tr),
             "current_normed_Tk": (self.state.get("current_Tk") - self.ideal_Tk)
-            / self.init_Tk,
+            / abs(self.init_Tk),
             "current_normed_F": (self.state.get("current_F") - self.init_F)
-            / self.init_F,
+            / abs(self.init_F),
             "current_normed_Q": (self.state.get("current_Q") - self.init_Q)
-            / self.init_Q,
+            / abs(self.init_Q),
         }
 
     def revert_normed_state(self, normed_state: dict):
         return {
             # -------------------------
-            "current_Ca": normed_state.get("current_normed_Ca") * self.ideal_Ca
+            "current_Ca": normed_state.get("current_normed_Ca") * abs(self.ideal_Ca)
             + self.init_Ca,
-            "current_Cb": normed_state.get("current_normed_Cb") * self.ideal_Cb
+            "current_Cb": normed_state.get("current_normed_Cb") * abs(self.ideal_Cb)
             + self.init_Cb,
-            "current_Tr": normed_state.get("current_normed_Tr") * self.ideal_Tr
+            "current_Tr": normed_state.get("current_normed_Tr") * abs(self.ideal_Tr)
             + self.init_Tr,
-            "current_Tk": normed_state.get("current_normed_Tk") * self.ideal_Tk
+            "current_Tk": normed_state.get("current_normed_Tk") * abs(self.ideal_Tk)
             + self.init_Tk,
-            "current_F": normed_state.get("current_normed_F") * self.init_F
+            "current_F": normed_state.get("current_normed_F") * abs(self.init_F)
             + self.init_F,
-            "current_Q": normed_state.get("current_normed_Q") * self.init_Q
+            "current_Q": normed_state.get("current_normed_Q") * abs(self.init_Q)
             + self.init_Q,
         }
 
     def norm_action(self, action):
-        return action / np.array([self.init_F, self.init_Q])
+        return action / np.array([abs(self.init_F), abs(self.init_Q)])
 
     def revert_normed_action(self, normed_action):
-        return normed_action * np.array([self.init_F, self.init_Q])
+        return normed_action * np.array([abs(self.init_F), abs(self.init_Q)])
 
     def step(self, action: tuple[float, float], return_xy: bool = False):
         # new action
