@@ -31,9 +31,9 @@ ddpg_kwargs = {
     "learning_rate_min": 3e-4,
     "learning_rate_decay_factor": 0.999,
     "discount_factor": 0.99,
-    "jitter_noise": 0.999,
+    "jitter_noise": 0.5,
     "jitter_noise_min": 1e-5,
-    "jitter_noise_decay_factor": 0.99,
+    "jitter_noise_decay_factor": 1 - 1e-4,
     "tau": 0.001,
     # -------------------------------
     "buffer_size": 1e7,
