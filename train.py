@@ -187,17 +187,24 @@ class TrainDDPG:
     ):
         self.env.reset()
         inference_reward = 0
-
+        cnt = 0
         for step in range(self.step_per_episode):
             normed_action = self.ddpg.select_action(
                 normed_state=torch.Tensor(
                     tuple(v for v in self.env.normed_state.values())
                 )
             )
-            inference_reward += self.env.step(
+            step_loss = self.env.step(
                 action=self.env.revert_normed_action(normed_action=normed_action)
             )
+            inference_reward += step_loss
+            if step_loss <= 0.01:
+                cnt += 1
+            else:
+                cnt = 0
 
+            if cnt == 15:
+                break
         print(f"inference_reward: {inference_reward}")
         fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(15, 10), sharex=True)
         axs[0, 0].plot(self.env.Ca_traj, "o-")
@@ -244,16 +251,21 @@ class TrainDDPG:
             current_normed_state_tensor = torch.Tensor(
                 tuple(v for v in self.env.normed_state.values())
             )
+            cnt = 0
             for step in range(self.step_per_episode):
                 # select action
-
                 normed_action = self.ddpg.select_action(
                     normed_state=current_normed_state_tensor
                 )
+
                 # TODO: torch.Tensor(tuple(v for v in self.env.state.values())) to function
                 step_loss = self.env.step(
                     action=self.env.revert_normed_action(normed_action=normed_action)
                 )
+                if step_loss <= 0.01:
+                    cnt += 1
+                else:
+                    cnt = 0
                 episode_loss += step_loss
 
                 next_normed_state_tensor = torch.Tensor(
@@ -280,6 +292,9 @@ class TrainDDPG:
 
                 self.actor_loss_history.append(actor_loss.detach().numpy().item())
                 self.critic_loss_history.append(critic_loss.detach().numpy().item())
+
+                if cnt == 15:
+                    break
 
             print("-------------------------------------------")
             print(f"episode loss [{episode}] : {round(episode_loss, ndigits=4)}")
