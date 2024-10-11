@@ -30,8 +30,8 @@ class CollectBufferData:
         except FileNotFoundError:
             pass
 
-    def extend_buffer_data(self, save: bool = True) -> None:
-        for _ in tqdm(range(self.n_episodes)):
+    def extend_buffer_data(self, extend_amount: int, save: bool = True) -> None:
+        for _ in tqdm(range(extend_amount)):
             self.env.reset()
             state_list = []
             action_list = []
@@ -177,7 +177,7 @@ class TrainDDPG:
             action = self.ddpg.select_action(
                 state=torch.Tensor(tuple(v for v in self.env.state.values()))
             )
-            inference_reward += self.env.step(action=action.detach().numpy())
+            inference_reward += self.env.step(action=action)
 
         print(f"inference_reward: {inference_reward}")
         fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(15, 10), sharex=True)
@@ -217,35 +217,87 @@ class TrainDDPG:
     def train_agent(
         self,
         replay_buffer: ReplayBuffer,
-        plot_reward_trend: bool = False,
+        plot_loss_trend: bool = False,
     ):
+        episode_loss_traj = []
         for episode in range(self.n_episodes):
-            # Sample a random mini-batch of N transitions (si, ai, ri, si+1) from R
-            sample_batch = replay_buffer.sample(self.ddpg_kwargs.get("batch_size"))
-            actor_loss, critic_loss = self.ddpg.update_network(sample_batch)
+            self.env.reset()
+            episode_loss = 0
+            current_state_tensor = torch.Tensor(
+                tuple(v for v in self.env.state.values())
+            )
+            for step in range(self.step_per_episode):
+                # select action
 
-            self.actor_loss_history.append(actor_loss.detach().numpy().item())
-            self.critic_loss_history.append(critic_loss.detach().numpy().item())
+                action = np.clip(
+                    a=self.ddpg.select_action(current_state_tensor)
+                    * np.random.randn()
+                    * np.array(
+                        [
+                            0.2
+                            * (
+                                self.env_kwargs.get("upper_F")
+                                - self.env_kwargs.get("lower_F")
+                            ),
+                            0.2
+                            * (
+                                self.env_kwargs.get("upper_Q")
+                                - self.env_kwargs.get("lower_Q")
+                            ),
+                        ]
+                    )
+                    / (1 + self.ddpg_kwargs.get("jitter_noise_decay_factor") * episode),
+                    a_min=[
+                        self.env_kwargs.get("lower_F"),
+                        self.env_kwargs.get("lower_Q"),
+                    ],
+                    a_max=[
+                        self.env_kwargs.get("upper_F"),
+                        self.env_kwargs.get("upper_Q"),
+                    ],
+                )
+                # TODO: torch.Tensor(tuple(v for v in self.env.state.values())) to function
+                step_loss = self.env.step(action=action)
+                episode_loss += step_loss
+
+                next_state_tensor = torch.Tensor(
+                    tuple(v for v in self.env.state.values())
+                )
+
+                replay_buffer.extend(
+                    TensorDict(
+                        {
+                            "state": current_state_tensor[None, :],
+                            "action": torch.Tensor(action)[None, :],
+                            "reward": torch.Tensor([step_loss])[None, :],
+                            "next_state": next_state_tensor[None, :],
+                        },
+                        batch_size=[1],
+                    )
+                )
+                current_state_tensor = next_state_tensor
+
+                # Sample a random mini-batch of N transitions (si, ai, ri, si+1) from R
+                sample_batch = replay_buffer.sample(self.ddpg_kwargs.get("batch_size"))
+                actor_loss, critic_loss = self.ddpg.update_network(sample_batch)
+
+                self.actor_loss_history.append(actor_loss.detach().numpy().item())
+                self.critic_loss_history.append(critic_loss.detach().numpy().item())
+
+            print(f"episode [{episode}] loss: {episode_loss}")
+            episode_loss_traj.append(episode_loss)
             self.ddpg.update_lr()
             if episode % 100 == 0:
-
+                # turn to inference mode
                 self.ddpg.inference = True
-                print(
-                    f"start inference [{episode}], inference mode: ",
-                    self.ddpg.inference,
-                )
                 self.inference_once()
                 # return back to training mode
                 self.ddpg.inference = False
-                print(
-                    f"end of inference [{episode}], inference mode: ",
-                    self.ddpg.inference,
-                )
 
-        if plot_reward_trend:
-            self.plot_reward_trend()
+        if plot_loss_trend:
+            self.plot_loss_trend()
 
-    def plot_reward_trend(
+    def plot_loss_trend(
         self,
         file_path: str = "./plots",
         prefix: str = "",
@@ -272,13 +324,12 @@ class TrainDDPG:
 
 # %%
 cbd = CollectBufferData(**training_kwargs)
-# cbd.extend_buffer_data()
-# print(cbd.replay_buffer)
+# cbd.extend_buffer_data(extend_amount=300)
 
 
 # %%
 tddpg = TrainDDPG(**training_kwargs)
-tddpg.train_agent(replay_buffer=cbd.replay_buffer, plot_reward_trend=True)
+tddpg.train_agent(replay_buffer=cbd.replay_buffer, plot_loss_trend=True)
 
 # %%
 import matplotlib.pyplot as plt

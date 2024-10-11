@@ -8,23 +8,21 @@ class DDPG(object):
     def __init__(self, inference: bool = False, **kwargs) -> None:
         self.inference = inference
         self.__dict__.update(**kwargs)
-
+        self.actor = Actor(
+            self.state_dim,
+            self.action_dim,
+        )
+        self.critic = Critic(
+            self.state_dim,
+            self.action_dim,
+        )
         if self.inference:
             # load model
             pass
         else:
-            self.actor = Actor(
-                self.state_dim,
-                self.action_dim,
-            )
             self.actor_optimizer = torch.optim.Adam(
                 self.actor.parameters(),
                 lr=self.learning_rate,
-            )
-
-            self.critic = Critic(
-                self.state_dim,
-                self.action_dim,
             )
             self.critic_optimizer = torch.optim.Adam(
                 self.critic.parameters(),
@@ -44,22 +42,16 @@ class DDPG(object):
             self.critic_prime.load_state_dict(self.critic.state_dict())
 
     def select_action(self, state: torch.Tensor):
-        if self.inference:
-            action = self.actor(state)
-
-        else:
-            action = self.actor_prime(state)
-
-        return action
+        return self.actor(state).detach().numpy()
 
     def update_network(self, sample_batch: TensorDict):
         # Set yi(next_action_score) = ri + γ * Q_prime(si + 1, µ_prime(si + 1 | θ ^ µ_prime) | θ ^ Q_prime)
-        next_action = self.actor_prime(sample_batch.get("next_state"))
+
         next_action_score = sample_batch.get("reward")[
             :, None
         ] + self.discount_factor * self.critic(
             sample_batch.get("next_state"),
-            next_action,
+            self.actor_prime(sample_batch.get("next_state")),
         )
 
         # Update critic by minimizing the mse loss
