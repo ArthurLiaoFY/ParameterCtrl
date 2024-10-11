@@ -40,7 +40,7 @@ class DDPG(object):
 
     def select_action(self, state: torch.Tensor):
         if self.inference:
-            additional_noise = np.array([0 for _ in range(len(self.action_dim))])
+            additional_noise = np.array([0 for _ in range(self.action_dim)])
         else:
             self.jitter_noise = max(
                 self.jitter_noise_min,
