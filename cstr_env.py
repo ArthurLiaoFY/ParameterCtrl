@@ -133,6 +133,12 @@ class CSTREnv:
             + self.init_Q,
         }
 
+    def norm_action(self, action):
+        return action / np.array([self.init_F, self.init_Q])
+
+    def revert_normed_action(self, normed_action):
+        return normed_action * np.array([self.init_F, self.init_Q])
+
     def step(self, action: tuple[float, float], return_xy: bool = False):
         # new action
         new_F = np.clip(
