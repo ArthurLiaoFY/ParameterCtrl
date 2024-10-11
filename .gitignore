@@ -4,3 +4,4 @@ test*
 *.html
 *.npy
 buffer_data
+*.png

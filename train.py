@@ -180,15 +180,23 @@ class TrainDDPG:
         self.actor_loss_history = []
         self.critic_loss_history = []
 
-    def inference_once(self):
+    def inference_once(
+        self,
+        episode: int,
+        file_path: str = "./plots",
+    ):
         self.env.reset()
         inference_reward = 0
 
         for step in range(self.step_per_episode):
-            action = self.ddpg.select_action(
-                state=torch.Tensor(tuple(v for v in self.env.state.values()))
+            normed_action = self.ddpg.select_action(
+                normed_state=torch.Tensor(
+                    tuple(v for v in self.env.normed_state.values())
+                )
             )
-            inference_reward += self.env.step(action=action)
+            inference_reward += self.env.step(
+                action=self.env.revert_normed_action(normed_action=normed_action)
+            )
 
         print(f"inference_reward: {inference_reward}")
         fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(15, 10), sharex=True)
@@ -215,7 +223,7 @@ class TrainDDPG:
             [self.env_kwargs.get("ideal_Tk") for _ in range(len(self.env.Tk_traj))]
         )
         axs[1, 1].set_title("Tk")
-        plt.show()
+        plt.savefig(f"{file_path}/observed_value_trend_in_{episode}.png", dpi=150)
 
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(15, 7), sharex=True)
         ax1.plot(self.env.F_traj, "o-")
@@ -223,7 +231,7 @@ class TrainDDPG:
 
         ax2.plot(self.env.Q_traj, "o-")
         ax2.set_title("Q dot")
-        plt.show()
+        plt.savefig(f"{file_path}/input_value_trend_in_{episode}.png", dpi=150)
 
     def train_agent(
         self,
@@ -252,7 +260,6 @@ class TrainDDPG:
                 next_normed_state_tensor = torch.Tensor(
                     tuple(v for v in self.env.normed_state.values())
                 )
-
                 replay_buffer.extend(
                     TensorDict(
                         {
@@ -273,17 +280,17 @@ class TrainDDPG:
                 self.actor_loss_history.append(actor_loss.detach().numpy().item())
                 self.critic_loss_history.append(critic_loss.detach().numpy().item())
 
+            print("-------------------------------------------")
             print(f"episode loss [{episode}] : {round(episode_loss, ndigits=4)}")
             print(
                 f"jitter noise [{episode}] : {round(self.ddpg.jitter_noise, ndigits=4)}"
             )
-            print("-------------------------------------------")
             episode_loss_traj.append(episode_loss)
             self.ddpg.update_lr()
             if episode % 50 == 0:
                 # turn to inference mode
                 self.ddpg.inference = True
-                self.inference_once()
+                self.inference_once(episode=episode)
                 # return back to training mode
                 self.ddpg.inference = False
 
@@ -324,7 +331,7 @@ cbd = CollectBufferData(**training_kwargs)
 tddpg = TrainDDPG(**training_kwargs)
 tddpg.train_agent(
     replay_buffer=cbd.replay_buffer,
-    plot_loss_trend=True,
+    plot_loss_trend=False,
 )
 
 # %%
