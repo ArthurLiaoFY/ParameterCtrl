@@ -17,40 +17,40 @@ class DDPG(object):
             self.state_dim,
             self.action_dim,
         )
-        if self.inference:
-            # load model
-            pass
-        else:
-            self.actor_optimizer = torch.optim.Adam(
-                self.actor.parameters(),
-                lr=self.learning_rate,
-            )
-            self.critic_optimizer = torch.optim.Adam(
-                self.critic.parameters(),
-                lr=self.learning_rate,
-            )
+        self.actor_prime = Actor(
+            self.state_dim,
+            self.action_dim,
+        )
+        self.actor_prime.load_state_dict(self.actor.state_dict())
 
-            self.actor_prime = Actor(
-                self.state_dim,
-                self.action_dim,
-            )
-            self.actor_prime.load_state_dict(self.actor.state_dict())
+        self.critic_prime = Critic(
+            self.state_dim,
+            self.action_dim,
+        )
+        self.critic_prime.load_state_dict(self.critic.state_dict())
 
-            self.critic_prime = Critic(
-                self.state_dim,
-                self.action_dim,
-            )
-            self.critic_prime.load_state_dict(self.critic.state_dict())
+        self.actor_optimizer = torch.optim.Adam(
+            self.actor.parameters(),
+            lr=self.learning_rate,
+        )
+        self.critic_optimizer = torch.optim.Adam(
+            self.critic.parameters(),
+            lr=self.learning_rate,
+        )
 
     def select_action(self, state: torch.Tensor):
         if self.inference:
-            return self.actor(state).detach().numpy()
+            additional_noise = np.array([0 for _ in range(len(self.action_dim))])
         else:
-            self.jitter_noise *= self.jitter_noise_decay_factor
-            return (
-                self.actor(state).detach().numpy()
-                + np.random.randn() * np.array([30, 2000]) * self.jitter_noise
+            self.jitter_noise = max(
+                self.jitter_noise_min,
+                self.jitter_noise * self.jitter_noise_decay_factor,
             )
+            additional_noise = (
+                np.random.randn() * np.array([30, 2000]) * self.jitter_noise
+            )
+
+        return self.actor(state).detach().numpy() + additional_noise
 
     def update_network(self, sample_batch: TensorDict):
         # Set yi(next_action_score) = ri + γ * Q_prime(si + 1, µ_prime(si + 1 | θ ^ µ_prime) | θ ^ Q_prime)
@@ -112,7 +112,7 @@ class DDPG(object):
     def update_lr(self) -> None:
         self.learning_rate = max(
             self.learning_rate_min,
-            self.learning_rate * self.learning_rate_decay,
+            self.learning_rate * self.learning_rate_decay_factor,
         )
 
     def save_networks(

@@ -40,18 +40,23 @@ class CollectBufferData:
 
             for _ in range(self.step_per_episode):
                 state_list.append(tuple(v for v in self.env.state.values()))
-                action = (
-                    np.random.uniform(
-                        low=self.env_kwargs.get("lower_F"),
-                        high=self.env_kwargs.get("upper_F"),
-                        size=1,
-                    ).item(),
-                    np.random.uniform(
-                        low=self.env_kwargs.get("lower_Q"),
-                        high=self.env_kwargs.get("upper_Q"),
-                        size=1,
-                    ).item(),
+                action = np.array(
+                    [
+                        np.random.uniform(
+                            low=self.env_kwargs.get("lower_F"),
+                            high=self.env_kwargs.get("upper_F"),
+                            size=1,
+                        ).item()
+                        - self.env.state.get("current_F"),
+                        np.random.uniform(
+                            low=self.env_kwargs.get("lower_Q"),
+                            high=self.env_kwargs.get("upper_Q"),
+                            size=1,
+                        ).item()
+                        - self.env.state.get("current_Q"),
+                    ]
                 )
+
                 action_list.append(action)
                 reward_list.append(self.env.step(action=action))
                 next_state_list.append(tuple(v for v in self.env.state.values()))
@@ -59,10 +64,10 @@ class CollectBufferData:
             self.replay_buffer.extend(
                 TensorDict(
                     {
-                        "state": torch.Tensor(state_list),
-                        "action": torch.Tensor(action_list),
-                        "reward": torch.Tensor(reward_list),
-                        "next_state": torch.Tensor(next_state_list),
+                        "state": torch.Tensor(np.array(state_list)),
+                        "action": torch.Tensor(np.array(action_list)),
+                        "reward": torch.Tensor(np.array(reward_list)),
+                        "next_state": torch.Tensor(np.array(next_state_list)),
                     },
                     batch_size=[self.step_per_episode],
                 )
@@ -220,7 +225,7 @@ class TrainDDPG:
         plot_loss_trend: bool = False,
     ):
         episode_loss_traj = []
-        for episode in range(self.n_episodes):
+        for episode in range(1, self.n_episodes + 1):
             self.env.reset()
             episode_loss = 0
             current_state_tensor = torch.Tensor(
@@ -229,33 +234,7 @@ class TrainDDPG:
             for step in range(self.step_per_episode):
                 # select action
 
-                action = np.clip(
-                    a=self.ddpg.select_action(current_state_tensor)
-                    * np.random.randn()
-                    * np.array(
-                        [
-                            0.2
-                            * (
-                                self.env_kwargs.get("upper_F")
-                                - self.env_kwargs.get("lower_F")
-                            ),
-                            0.2
-                            * (
-                                self.env_kwargs.get("upper_Q")
-                                - self.env_kwargs.get("lower_Q")
-                            ),
-                        ]
-                    )
-                    / (1 + self.ddpg_kwargs.get("jitter_noise_decay_factor") * episode),
-                    a_min=[
-                        self.env_kwargs.get("lower_F"),
-                        self.env_kwargs.get("lower_Q"),
-                    ],
-                    a_max=[
-                        self.env_kwargs.get("upper_F"),
-                        self.env_kwargs.get("upper_Q"),
-                    ],
-                )
+                action = self.ddpg.select_action(current_state_tensor)
                 # TODO: torch.Tensor(tuple(v for v in self.env.state.values())) to function
                 step_loss = self.env.step(action=action)
                 episode_loss += step_loss
@@ -284,10 +263,14 @@ class TrainDDPG:
                 self.actor_loss_history.append(actor_loss.detach().numpy().item())
                 self.critic_loss_history.append(critic_loss.detach().numpy().item())
 
-            print(f"episode [{episode}] loss: {episode_loss}")
+            print(f"episode loss [{episode}] : {episode_loss}")
+            print(
+                f"jitter noise [{episode}] : {round(self.ddpg.jitter_noise, ndigits=4)}"
+            )
+            print("###########################################")
             episode_loss_traj.append(episode_loss)
             self.ddpg.update_lr()
-            if episode % 100 == 0:
+            if episode % 500 == 0:
                 # turn to inference mode
                 self.ddpg.inference = True
                 self.inference_once()
@@ -322,14 +305,14 @@ class TrainDDPG:
 # tcstra.train_agent(plot_reward_trend=True)
 # tcstra.save_table(prefix="CSTR_Q_")
 
+
 # %%
 cbd = CollectBufferData(**training_kwargs)
-# cbd.extend_buffer_data(extend_amount=300)
-
-
-# %%
 tddpg = TrainDDPG(**training_kwargs)
-tddpg.train_agent(replay_buffer=cbd.replay_buffer, plot_loss_trend=True)
+tddpg.train_agent(
+    replay_buffer=cbd.replay_buffer,
+    plot_loss_trend=True,
+)
 
 # %%
 import matplotlib.pyplot as plt

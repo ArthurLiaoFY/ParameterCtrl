@@ -17,7 +17,6 @@ for i in range(6):
     plt.show()
 
 # %%
-plt.plot(a.get("reward"), "o")
 # %%
 for i in range(2):
     plt.plot(a.get("action").detach().numpy()[:, i], "o")
