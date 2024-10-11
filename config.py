@@ -67,7 +67,7 @@ env_kwargs = {
 
 training_kwargs = {
     "n_episodes": 1000,
-    "step_per_episode": 201,
+    "step_per_episode": 51,
     "env_kwargs": env_kwargs,
     "q_learning_kwargs": q_learning_kwargs,
     "ddpg_kwargs": ddpg_kwargs,
