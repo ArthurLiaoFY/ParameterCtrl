@@ -31,8 +31,8 @@ ddpg_kwargs = {
     "learning_rate_min": 3e-4,
     "learning_rate_decay": 0.999,
     "discount_factor": 0.99,
-    "jitter_noise": 0.999,
-    "jitter_noise_decay_factor": 0.95,
+    "jitter_noise": 0.9999,
+    "jitter_noise_decay_factor": 0.9995,
     "tau": 0.001,
     # -------------------------------
     "buffer_size": 1e7,
@@ -65,7 +65,7 @@ env_kwargs = {
 # Train
 
 training_kwargs = {
-    "n_episodes": 1000,
+    "n_episodes": 2500,
     "step_per_episode": 201,
     "env_kwargs": env_kwargs,
     "q_learning_kwargs": q_learning_kwargs,
