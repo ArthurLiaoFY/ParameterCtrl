@@ -38,7 +38,7 @@ class DDPG(object):
             lr=self.learning_rate,
         )
 
-    def select_action(self, state: torch.Tensor):
+    def select_action(self, normed_state: torch.Tensor):
         if self.inference:
             additional_noise = np.array([0 for _ in range(self.action_dim)])
         else:
@@ -46,11 +46,9 @@ class DDPG(object):
                 self.jitter_noise_min,
                 self.jitter_noise * self.jitter_noise_decay_factor,
             )
-            additional_noise = (
-                np.random.randn() * np.array([30, 2000]) * self.jitter_noise
-            )
+            additional_noise = np.random.randn() * self.jitter_noise
 
-        return self.actor(state).detach().numpy() + additional_noise
+        return self.actor(normed_state).detach().numpy() + additional_noise
 
     def update_network(self, sample_batch: TensorDict):
         # Set yi(next_action_score) = ri + γ * Q_prime(si + 1, µ_prime(si + 1 | θ ^ µ_prime) | θ ^ Q_prime)
@@ -58,14 +56,14 @@ class DDPG(object):
         next_action_score = sample_batch.get("reward")[
             :, None
         ] + self.discount_factor * self.critic_prime(
-            sample_batch.get("next_state"),
-            self.actor_prime(sample_batch.get("next_state")),
+            sample_batch.get("next_normed_state"),
+            self.actor_prime(sample_batch.get("next_normed_state")),
         )
 
         # Update critic by minimizing the mse loss
         current_action_score = self.critic(
-            sample_batch.get("state"),
-            sample_batch.get("action"),
+            sample_batch.get("normed_state"),
+            sample_batch.get("normed_action"),
         )
 
         critic_loss = torch.nn.functional.mse_loss(
@@ -80,8 +78,8 @@ class DDPG(object):
         actor_loss = (
             -1
             * self.critic(
-                sample_batch.get("state"),
-                self.actor(sample_batch.get("state")),
+                sample_batch.get("normed_state"),
+                self.actor(sample_batch.get("normed_state")),
             ).mean()
         )
         self.actor_optimizer.zero_grad()
