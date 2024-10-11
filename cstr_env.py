@@ -157,7 +157,7 @@ class CSTREnv:
         ).item()
 
         # reward
-        reward = -1000 * (
+        reward = -1 * (
             ((self.ideal_Ca - new_Ca) / self.ideal_Ca) ** 2
             + ((self.ideal_Cb - new_Cb) / self.ideal_Cb) ** 2
             + ((self.ideal_Tr - new_Tr) / self.ideal_Tr) ** 2
