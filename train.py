@@ -235,7 +235,7 @@ class TrainDDPG:
 
     def train_agent(
         self,
-        replay_buffer: ReplayBuffer,
+        buffer_data: CollectBufferData,
         plot_loss_trend: bool = False,
     ):
         for episode in range(1, self.n_episodes + 1):
@@ -259,7 +259,7 @@ class TrainDDPG:
                 next_normed_state_tensor = torch.Tensor(
                     tuple(v for v in self.env.normed_state.values())
                 )
-                replay_buffer.extend(
+                buffer_data.replay_buffer.extend(
                     TensorDict(
                         {
                             "normed_state": current_normed_state_tensor[None, :],
@@ -273,7 +273,9 @@ class TrainDDPG:
                 current_normed_state_tensor = next_normed_state_tensor
 
                 # Sample a random mini-batch of N transitions (si, ai, ri, si+1) from R
-                sample_batch = replay_buffer.sample(self.ddpg_kwargs.get("batch_size"))
+                sample_batch = buffer_data.replay_buffer.sample(
+                    self.ddpg_kwargs.get("batch_size")
+                )
                 actor_loss, critic_loss = self.ddpg.update_network(sample_batch)
 
                 self.actor_loss_history.append(actor_loss.detach().numpy().item())
@@ -292,6 +294,8 @@ class TrainDDPG:
                 self.inference_once(episode=episode)
                 # return back to training mode
                 self.ddpg.inference = False
+
+                buffer_data.save_replay_buffer()
 
         if plot_loss_trend:
             self.plot_loss_trend()
