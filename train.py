@@ -198,12 +198,12 @@ class TrainDDPG:
                 action=self.env.revert_normed_action(normed_action=normed_action)
             )
             inference_reward += step_loss
-            if step_loss <= 0.01:
+            if step_loss <= self.step_loss_tolerance:
                 cnt += 1
             else:
                 cnt = 0
 
-            if cnt == 15:
+            if cnt == self.early_stop_patience:
                 break
         print(f"inference_reward: {inference_reward}")
         fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(15, 10), sharex=True)
@@ -262,7 +262,7 @@ class TrainDDPG:
                 step_loss = self.env.step(
                     action=self.env.revert_normed_action(normed_action=normed_action)
                 )
-                if step_loss <= 0.01:
+                if step_loss <= self.step_loss_tolerance:
                     cnt += 1
                 else:
                     cnt = 0
@@ -293,7 +293,7 @@ class TrainDDPG:
                 self.actor_loss_history.append(actor_loss.detach().numpy().item())
                 self.critic_loss_history.append(critic_loss.detach().numpy().item())
 
-                if cnt == 15:
+                if cnt == self.early_stop_patience:
                     break
 
             print("-------------------------------------------")
@@ -303,7 +303,7 @@ class TrainDDPG:
             )
             self.episode_loss_traj.append(episode_loss)
             self.ddpg.update_lr()
-            if episode % 50 == 0:
+            if episode % 200 == 0:
                 # turn to inference mode
                 self.ddpg.inference = True
                 self.inference_once(episode=episode)
