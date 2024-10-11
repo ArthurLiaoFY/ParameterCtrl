@@ -98,6 +98,41 @@ class CSTREnv:
         self.F_traj = [self.init_F]
         self.Q_traj = [self.init_Q]
 
+    @property
+    def normed_state(self):
+        return {
+            # -------------------------
+            "current_normed_Ca": (self.state.get("current_Ca") - self.ideal_Ca)
+            / self.init_Ca,
+            "current_normed_Cb": (self.state.get("current_Cb") - self.ideal_Cb)
+            / self.init_Cb,
+            "current_normed_Tr": (self.state.get("current_Tr") - self.ideal_Tr)
+            / self.init_Tr,
+            "current_normed_Tk": (self.state.get("current_Tk") - self.ideal_Tk)
+            / self.init_Tk,
+            "current_normed_F": (self.state.get("current_F") - self.init_F)
+            / self.init_F,
+            "current_normed_Q": (self.state.get("current_Q") - self.init_Q)
+            / self.init_Q,
+        }
+
+    def revert_normed_state(self, normed_state: dict):
+        return {
+            # -------------------------
+            "current_Ca": normed_state.get("current_normed_Ca") * self.ideal_Ca
+            + self.init_Ca,
+            "current_Cb": normed_state.get("current_normed_Cb") * self.ideal_Cb
+            + self.init_Cb,
+            "current_Tr": normed_state.get("current_normed_Tr") * self.ideal_Tr
+            + self.init_Tr,
+            "current_Tk": normed_state.get("current_normed_Tk") * self.ideal_Tk
+            + self.init_Tk,
+            "current_F": normed_state.get("current_normed_F") * self.init_F
+            + self.init_F,
+            "current_Q": normed_state.get("current_normed_Q") * self.init_Q
+            + self.init_Q,
+        }
+
     def step(self, action: tuple[float, float], return_xy: bool = False):
         # new action
         new_F = np.clip(
