@@ -105,10 +105,10 @@ class CSTREnv:
             "current_F": self.init_F,
             "current_Q": self.init_Q,
             # -------------------------
-            "ideal_Ca": self.ideal_Ca,
-            "ideal_Cb": self.ideal_Cb,
-            "ideal_Tr": self.ideal_Tr,
-            "ideal_Tk": self.ideal_Tk,
+            # "ideal_Ca": self.ideal_Ca,
+            # "ideal_Cb": self.ideal_Cb,
+            # "ideal_Tr": self.ideal_Tr,
+            # "ideal_Tk": self.ideal_Tk,
         }
         self.Ca_traj = [self.init_Ca]
         self.Cb_traj = [self.init_Cb]
@@ -174,10 +174,10 @@ class CSTREnv:
             "current_F": new_F,
             "current_Q": new_Q,
             # -------------------------
-            "ideal_Ca": self.ideal_Ca,
-            "ideal_Cb": self.ideal_Cb,
-            "ideal_Tr": self.ideal_Tr,
-            "ideal_Tk": self.ideal_Tk,
+            # "ideal_Ca": self.ideal_Ca,
+            # "ideal_Cb": self.ideal_Cb,
+            # "ideal_Tr": self.ideal_Tr,
+            # "ideal_Tk": self.ideal_Tk,
         }
 
         self.Ca_traj.append(new_Ca)
