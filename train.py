@@ -176,7 +176,7 @@ class TrainDDPG:
 
         self.max_total_reward = -np.inf
 
-        self.rewards_history = []
+        self.episode_loss_traj = []
         self.actor_loss_history = []
         self.critic_loss_history = []
 
@@ -238,7 +238,6 @@ class TrainDDPG:
         replay_buffer: ReplayBuffer,
         plot_loss_trend: bool = False,
     ):
-        episode_loss_traj = []
         for episode in range(1, self.n_episodes + 1):
             self.env.reset()
             episode_loss = 0
@@ -285,7 +284,7 @@ class TrainDDPG:
             print(
                 f"jitter noise [{episode}] : {round(self.ddpg.jitter_noise, ndigits=4)}"
             )
-            episode_loss_traj.append(episode_loss)
+            self.episode_loss_traj.append(episode_loss)
             self.ddpg.update_lr()
             if episode % 50 == 0:
                 # turn to inference mode
@@ -310,8 +309,8 @@ class TrainDDPG:
         fig = go.Figure()
         fig.add_trace(
             go.Scatter(
-                x=np.arange(len(self.rewards_history)),
-                y=self.rewards_history,
+                x=np.arange(len(self.episode_loss_traj)),
+                y=self.episode_loss_traj,
                 mode="lines+markers",
             )
         )
@@ -324,22 +323,3 @@ class TrainDDPG:
 
 # tcstra.train_agent(plot_reward_trend=True)
 # tcstra.save_table(prefix="CSTR_Q_")
-
-
-# %%
-cbd = CollectBufferData(**training_kwargs)
-tddpg = TrainDDPG(**training_kwargs)
-tddpg.train_agent(
-    replay_buffer=cbd.replay_buffer,
-    plot_loss_trend=False,
-)
-
-# %%
-# import matplotlib.pyplot as plt
-
-# plt.plot(tddpg.critic_loss_history)
-# plt.show()
-
-# plt.plot(tddpg.actor_loss_history)
-# plt.show()
-# %%
