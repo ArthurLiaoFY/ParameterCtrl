@@ -34,7 +34,7 @@ ddpg_kwargs = {
     "jitter_noise": 0.05,
     "jitter_noise_min": 1e-5,
     "jitter_noise_decay_factor": 1 - 1e-4,
-    "tau": 0.01,
+    "tau": 0.001,
     # -------------------------------
     "buffer_size": 1e7,
     "replay_buffer_dir": "./buffer_data",
