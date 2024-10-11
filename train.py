@@ -33,13 +33,15 @@ class CollectBufferData:
     def extend_buffer_data(self, extend_amount: int, save: bool = True) -> None:
         for _ in tqdm(range(extend_amount)):
             self.env.reset()
-            state_list = []
-            action_list = []
+            normed_state_list = []
+            normed_action_list = []
             reward_list = []
-            next_state_list = []
+            next_normed_state_list = []
 
             for _ in range(self.step_per_episode):
-                state_list.append(tuple(v for v in self.env.state.values()))
+                normed_state_list.append(
+                    tuple(v for v in self.env.normed_state.values())
+                )
                 action = np.array(
                     [
                         np.random.uniform(
@@ -57,17 +59,21 @@ class CollectBufferData:
                     ]
                 )
 
-                action_list.append(action)
+                normed_action_list.append(self.env.norm_action(action))
                 reward_list.append(self.env.step(action=action))
-                next_state_list.append(tuple(v for v in self.env.state.values()))
+                next_normed_state_list.append(
+                    tuple(v for v in self.env.normed_state.values())
+                )
 
             self.replay_buffer.extend(
                 TensorDict(
                     {
-                        "state": torch.Tensor(np.array(state_list)),
-                        "action": torch.Tensor(np.array(action_list)),
+                        "normed_state": torch.Tensor(np.array(normed_state_list)),
+                        "normed_action": torch.Tensor(np.array(normed_action_list)),
                         "reward": torch.Tensor(np.array(reward_list)),
-                        "next_state": torch.Tensor(np.array(next_state_list)),
+                        "next_normed_state": torch.Tensor(
+                            np.array(next_normed_state_list)
+                        ),
                     },
                     batch_size=[self.step_per_episode],
                 )
@@ -228,33 +234,37 @@ class TrainDDPG:
         for episode in range(1, self.n_episodes + 1):
             self.env.reset()
             episode_loss = 0
-            current_state_tensor = torch.Tensor(
-                tuple(v for v in self.env.state.values())
+            current_normed_state_tensor = torch.Tensor(
+                tuple(v for v in self.env.normed_state.values())
             )
             for step in range(self.step_per_episode):
                 # select action
 
-                action = self.ddpg.select_action(current_state_tensor)
+                normed_action = self.ddpg.select_action(
+                    normed_state=current_normed_state_tensor
+                )
                 # TODO: torch.Tensor(tuple(v for v in self.env.state.values())) to function
-                step_loss = self.env.step(action=action)
+                step_loss = self.env.step(
+                    action=self.env.revert_normed_action(normed_action=normed_action)
+                )
                 episode_loss += step_loss
 
-                next_state_tensor = torch.Tensor(
-                    tuple(v for v in self.env.state.values())
+                next_normed_state_tensor = torch.Tensor(
+                    tuple(v for v in self.env.normed_state.values())
                 )
 
                 replay_buffer.extend(
                     TensorDict(
                         {
-                            "state": current_state_tensor[None, :],
-                            "action": torch.Tensor(action)[None, :],
+                            "normed_state": current_normed_state_tensor[None, :],
+                            "normed_action": torch.Tensor(normed_action)[None, :],
                             "reward": torch.Tensor([step_loss])[None, :],
-                            "next_state": next_state_tensor[None, :],
+                            "next_normed_state": next_normed_state_tensor[None, :],
                         },
                         batch_size=[1],
                     )
                 )
-                current_state_tensor = next_state_tensor
+                current_normed_state_tensor = next_normed_state_tensor
 
                 # Sample a random mini-batch of N transitions (si, ai, ri, si+1) from R
                 sample_batch = replay_buffer.sample(self.ddpg_kwargs.get("batch_size"))
@@ -263,14 +273,14 @@ class TrainDDPG:
                 self.actor_loss_history.append(actor_loss.detach().numpy().item())
                 self.critic_loss_history.append(critic_loss.detach().numpy().item())
 
-            print(f"episode loss [{episode}] : {episode_loss}")
+            print(f"episode loss [{episode}] : {round(episode_loss, ndigits=4)}")
             print(
                 f"jitter noise [{episode}] : {round(self.ddpg.jitter_noise, ndigits=4)}"
             )
-            print("###########################################")
+            print("-------------------------------------------")
             episode_loss_traj.append(episode_loss)
             self.ddpg.update_lr()
-            if episode % 500 == 0:
+            if episode % 50 == 0:
                 # turn to inference mode
                 self.ddpg.inference = True
                 self.inference_once()
@@ -279,6 +289,9 @@ class TrainDDPG:
 
         if plot_loss_trend:
             self.plot_loss_trend()
+
+    # def update_buffer_data(self):
+    #     replay_buffer.dumps(self.ddpg_kwargs.get("replay_buffer_dir"))
 
     def plot_loss_trend(
         self,
@@ -315,11 +328,11 @@ tddpg.train_agent(
 )
 
 # %%
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-plt.plot(tddpg.critic_loss_history)
-plt.show()
+# plt.plot(tddpg.critic_loss_history)
+# plt.show()
 
-plt.plot(tddpg.actor_loss_history)
-plt.show()
+# plt.plot(tddpg.actor_loss_history)
+# plt.show()
 # %%
