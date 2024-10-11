@@ -5,3 +5,4 @@ test*
 *.npy
 buffer_data
 *.png
+.Ds_Store
