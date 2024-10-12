@@ -17,6 +17,8 @@ class DDPG(object):
             self.state_dim,
             self.action_dim,
         )
+        self.load_networks()
+
         self.actor_prime = Actor(
             self.state_dim,
             self.action_dim,
@@ -115,20 +117,44 @@ class DDPG(object):
 
     def save_networks(
         self,
-        file_path: str = "./agent/trained_agent",
+        model_file_path: str = "./agent/trained_agent",
         prefix: str = "",
         suffix: str = "",
-        actor_name: str = "actor_network",
-        critic_name: str = "critic_network",
+        actor_name: str = "ddpg_actor_network",
+        critic_name: str = "ddpg_critic_network",
     ):
-        pass
+        torch.save(
+            self.actor.state_dict(),
+            f"{model_file_path}/{prefix}{actor_name}{suffix}.pt",
+        )
+        torch.save(
+            self.critic.state_dict(),
+            f"{model_file_path}/{prefix}{critic_name}{suffix}.pt",
+        )
 
     def load_networks(
         self,
-        file_path: str = "./agent/trained_agent",
+        model_file_path: str = "./agent/trained_agent",
         prefix: str = "",
         suffix: str = "",
-        actor_name: str = "actor_network",
-        critic_name: str = "critic_network",
+        actor_name: str = "ddpg_actor_network",
+        critic_name: str = "ddpg_critic_network",
     ):
-        pass
+        try:
+            self.actor.load_state_dict(
+                torch.load(
+                    f"{model_file_path}/{prefix}{actor_name}{suffix}.pt",
+                    weights_only=True,
+                )
+            )
+            self.critic.load_state_dict(
+                torch.load(
+                    f"{model_file_path}/{prefix}{critic_name}{suffix}.pt",
+                    weights_only=True,
+                )
+            )
+            print(
+                f"Found trained model under {model_file_path}, weights have been loaded."
+            )
+        except FileNotFoundError:
+            pass

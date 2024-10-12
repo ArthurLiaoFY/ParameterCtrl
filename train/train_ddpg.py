@@ -54,6 +54,7 @@ class TrainDDPG:
     def train_agent(
         self,
         buffer_data: CollectBufferData,
+        save_network: bool = True,
     ):
         inference_traj = {
             "ideal_Ca": self.env.ideal_Ca,
@@ -149,3 +150,6 @@ class TrainDDPG:
 
         plot_inference_result(inference_traj=inference_traj)
         plot_reward_trend(rewards=self.episode_loss_traj)
+
+        if save_network:
+            self.ddpg.save_networks()

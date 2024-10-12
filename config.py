@@ -31,9 +31,9 @@ ddpg_kwargs = {
     "learning_rate_min": 3e-4,
     "learning_rate_decay_factor": 1 - 1e-3,
     "discount_factor": 0.99,
-    "jitter_noise": 0.5,
+    "jitter_noise": 0.2,
     "jitter_noise_min": 1e-5,
-    "jitter_noise_decay_factor": 1 - 5e-4,
+    "jitter_noise_decay_factor": 1 - 2e-4,
     "tau": 0.001,
 }
 
@@ -62,7 +62,7 @@ env_kwargs = {
     "noise": 0.1,
     # ---------------
     "upper_F": 100.0,
-    "lower_F": 5.0,
+    "lower_F": 0.0,
     "upper_Q": 0.0,
     "lower_Q": -8500.0,
 }
@@ -72,8 +72,8 @@ env_kwargs = {
 training_kwargs = {
     "n_episodes": 1000,
     "step_per_episode": 51,
-    "early_stop_patience": 15,
-    "step_loss_tolerance": 0.01,
+    "early_stop_patience": 10,
+    "step_loss_tolerance": 1e-2,
     "env_kwargs": env_kwargs,
     "replay_buffer_kwargs": replay_buffer_kwargs,
     "q_learning_kwargs": q_learning_kwargs,

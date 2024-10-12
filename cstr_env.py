@@ -165,25 +165,17 @@ class CSTREnv:
         )
 
         # new state
-        new_Ca = (
-            y[-1][0] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 0.1
-        ).item()
-        new_Cb = (
-            y[-1][1] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 0.1
-        ).item()
-        new_Tr = (
-            y[-1][2] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 5.0
-        ).item()
-        new_Tk = (
-            y[-1][3] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 5.0
-        ).item()
+        new_Ca = y[-1][0] + self.noise * self.seed.randn() * 0.1
+        new_Cb = y[-1][1] + self.noise * self.seed.randn() * 0.1
+        new_Tr = y[-1][2] + self.noise * self.seed.randn() * 5.0
+        new_Tk = y[-1][3] + self.noise * self.seed.randn() * 5.0
 
         # reward
         reward = -1 * (
-            ((self.ideal_Ca - new_Ca) / self.ideal_Ca) ** 2
-            + ((self.ideal_Cb - new_Cb) / self.ideal_Cb) ** 2
-            + ((self.ideal_Tr - new_Tr) / self.ideal_Tr) ** 2
-            + ((self.ideal_Tk - new_Tk) / self.ideal_Tk) ** 2
+            (abs(self.ideal_Ca - new_Ca) / self.ideal_Ca)
+            + (abs(self.ideal_Cb - new_Cb) / self.ideal_Cb)
+            + (abs(self.ideal_Tr - new_Tr) / self.ideal_Tr)
+            + (abs(self.ideal_Tk - new_Tk) / self.ideal_Tk)
         )
 
         # update state
