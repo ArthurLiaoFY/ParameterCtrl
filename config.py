@@ -35,6 +35,10 @@ ddpg_kwargs = {
     "jitter_noise_min": 1e-5,
     "jitter_noise_decay_factor": 1 - 1e-4,
     "tau": 0.001,
+}
+
+# Replay buffer
+replay_buffer_kwargs = {
     # -------------------------------
     "buffer_size": 1e7,
     "replay_buffer_dir": "./buffer_data",
@@ -71,6 +75,7 @@ training_kwargs = {
     "early_stop_patience": 15,
     "step_loss_tolerance": 0.01,
     "env_kwargs": env_kwargs,
+    "replay_buffer_kwargs": replay_buffer_kwargs,
     "q_learning_kwargs": q_learning_kwargs,
     "ddpg_kwargs": ddpg_kwargs,
 }
