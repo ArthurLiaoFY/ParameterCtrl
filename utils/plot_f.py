@@ -7,9 +7,8 @@ from cstr_env import CSTREnv, np
 
 
 def plot_reward_trend(
-    self,
     rewards: list | np.ndarray,
-    file_path: str = ".",
+    file_path: str = "./plots",
     prefix: str = "",
     suffix: str = "",
     fig_name: str = "reward_trend",
@@ -18,6 +17,10 @@ def plot_reward_trend(
     fig.add_trace(
         go.Scatter(x=np.arange(len(rewards)), y=rewards, mode="lines+markers")
     )
+    fig.update_layout(
+        title_text="Reward Trend",
+    )
+
     plotly.offline.plot(
         figure_or_data=fig, filename=f"{file_path}/{prefix}{fig_name}{suffix}.html"
     )

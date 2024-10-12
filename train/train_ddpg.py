@@ -117,11 +117,10 @@ class TrainDDPG:
                 if cnt == self.early_stop_patience:
                     break
 
-            print("-------------------------------------------")
-            print(f"episode loss [{episode}] : {round(episode_loss, ndigits=4)}")
-            print(
-                f"jitter noise [{episode}] : {round(self.ddpg.jitter_noise, ndigits=4)}"
-            )
+            print(f"episode [{episode}]-------------------------------------------")
+            print(f"episode loss : {round(episode_loss, ndigits=4)}")
+            print(f"jitter noise : {round(self.ddpg.jitter_noise, ndigits=4)}")
+            print(f"learning rate : {round(self.ddpg.learning_rate, ndigits=4)}")
             self.episode_loss_traj.append(episode_loss)
             self.ddpg.update_lr()
             if episode % 200 == 0:
@@ -149,3 +148,4 @@ class TrainDDPG:
                 buffer_data.save_replay_buffer()
 
         plot_inference_result(inference_traj=inference_traj)
+        plot_reward_trend(rewards=self.episode_loss_traj)
