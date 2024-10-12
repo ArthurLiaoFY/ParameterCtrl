@@ -67,25 +67,6 @@ def cstr_system(y, t, u):
     return dC_adt, dC_bdt, dT_Rdt, dT_Kdt
 
 
-# def cstr_env(
-#     Ca,
-#     Cb,
-#     Tr,
-#     Tk,
-#     F,
-#     Q_dot,
-#     t_start=0,
-#     t_end=1,
-#     num=5,
-# ):
-#     odeint(
-#         func=cstr_system,
-#         y0=(Ca, Cb, Tr, Tk),
-#         t=np.linspace(start=t_start, stop=t_end, num=num),
-#         args=((F, Q_dot)),
-#     )
-
-
 class CSTREnv:
     def __init__(self, seed: int | None = None, **kwargs) -> None:
         if seed is None:
@@ -105,10 +86,10 @@ class CSTREnv:
             "current_F": self.init_F,
             "current_Q": self.init_Q,
             # -------------------------
-            "ideal_Ca": self.ideal_Ca,
-            "ideal_Cb": self.ideal_Cb,
-            "ideal_Tr": self.ideal_Tr,
-            "ideal_Tk": self.ideal_Tk,
+            # "ideal_Ca": self.ideal_Ca,
+            # "ideal_Cb": self.ideal_Cb,
+            # "ideal_Tr": self.ideal_Tr,
+            # "ideal_Tk": self.ideal_Tk,
         }
         self.Ca_traj = [self.init_Ca]
         self.Cb_traj = [self.init_Cb]
@@ -117,7 +98,49 @@ class CSTREnv:
         self.F_traj = [self.init_F]
         self.Q_traj = [self.init_Q]
 
+    @property
+    def normed_state(self):
+        return {
+            # -------------------------
+            "current_normed_Ca": (self.state.get("current_Ca") - self.ideal_Ca)
+            / abs(self.init_Ca),
+            "current_normed_Cb": (self.state.get("current_Cb") - self.ideal_Cb)
+            / abs(self.init_Cb),
+            "current_normed_Tr": (self.state.get("current_Tr") - self.ideal_Tr)
+            / abs(self.init_Tr),
+            "current_normed_Tk": (self.state.get("current_Tk") - self.ideal_Tk)
+            / abs(self.init_Tk),
+            "current_normed_F": (self.state.get("current_F") - self.init_F)
+            / abs(self.init_F),
+            "current_normed_Q": (self.state.get("current_Q") - self.init_Q)
+            / abs(self.init_Q),
+        }
+
+    def revert_normed_state(self, normed_state: dict):
+        return {
+            # -------------------------
+            "current_Ca": normed_state.get("current_normed_Ca") * abs(self.ideal_Ca)
+            + self.init_Ca,
+            "current_Cb": normed_state.get("current_normed_Cb") * abs(self.ideal_Cb)
+            + self.init_Cb,
+            "current_Tr": normed_state.get("current_normed_Tr") * abs(self.ideal_Tr)
+            + self.init_Tr,
+            "current_Tk": normed_state.get("current_normed_Tk") * abs(self.ideal_Tk)
+            + self.init_Tk,
+            "current_F": normed_state.get("current_normed_F") * abs(self.init_F)
+            + self.init_F,
+            "current_Q": normed_state.get("current_normed_Q") * abs(self.init_Q)
+            + self.init_Q,
+        }
+
+    def norm_action(self, action):
+        return action / np.array([abs(self.init_F), abs(self.init_Q)])
+
+    def revert_normed_action(self, normed_action):
+        return normed_action * np.array([abs(self.init_F), abs(self.init_Q)])
+
     def step(self, action: tuple[float, float], return_xy: bool = False):
+        # new action
         new_F = np.clip(
             a=self.F_traj[-1] + action[0],
             a_max=self.upper_F,
@@ -129,7 +152,6 @@ class CSTREnv:
             a_min=self.lower_Q,
         )
 
-        # going on to the new state and calculate reward
         y = odeint(
             func=cstr_system,
             y0=(
@@ -142,28 +164,21 @@ class CSTREnv:
             args=([new_F, new_Q],),
         )
 
-        new_Ca = (
-            y[-1][0] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 0.1
-        ).item()
-        new_Cb = (
-            y[-1][1] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 0.1
-        ).item()
-        new_Tr = (
-            y[-1][2] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 5.0
-        ).item()
-        new_Tk = (
-            y[-1][3] + self.noise * self.seed.uniform(low=-1, high=1, size=1) * 5.0
-        ).item()
+        # new state
+        new_Ca = y[-1][0] + self.noise * self.seed.randn() * 0.1
+        new_Cb = y[-1][1] + self.noise * self.seed.randn() * 0.1
+        new_Tr = y[-1][2] + self.noise * self.seed.randn() * 5.0
+        new_Tk = y[-1][3] + self.noise * self.seed.randn() * 5.0
 
-        reward = -1000 * (
-            abs((self.ideal_Ca - new_Ca) / self.ideal_Ca)
-            + abs((self.ideal_Cb - new_Cb) / self.ideal_Cb)
-            + abs((self.ideal_Tr - new_Tr) / self.ideal_Tr)
-            + abs((self.ideal_Tk - new_Tk) / self.ideal_Tk)
+        # reward
+        reward = -1 * (
+            (abs(self.ideal_Ca - new_Ca) / self.ideal_Ca)
+            + (abs(self.ideal_Cb - new_Cb) / self.ideal_Cb)
+            + (abs(self.ideal_Tr - new_Tr) / self.ideal_Tr)
+            + (abs(self.ideal_Tk - new_Tk) / self.ideal_Tk)
         )
 
         # update state
-
         self.state = {
             # -------------------------
             "current_Ca": new_Ca,
@@ -173,10 +188,10 @@ class CSTREnv:
             "current_F": new_F,
             "current_Q": new_Q,
             # -------------------------
-            "ideal_Ca": self.ideal_Ca,
-            "ideal_Cb": self.ideal_Cb,
-            "ideal_Tr": self.ideal_Tr,
-            "ideal_Tk": self.ideal_Tk,
+            # "ideal_Ca": self.ideal_Ca,
+            # "ideal_Cb": self.ideal_Cb,
+            # "ideal_Tr": self.ideal_Tr,
+            # "ideal_Tk": self.ideal_Tk,
         }
 
         self.Ca_traj.append(new_Ca)
