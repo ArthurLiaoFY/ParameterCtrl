@@ -180,10 +180,10 @@ class CSTREnv:
 
         # reward
         reward = -1 * (
-            (abs(self.ideal_Ca - new_Ca) / self.ideal_Ca)
-            + (abs(self.ideal_Cb - new_Cb) / self.ideal_Cb)
-            + (abs(self.ideal_Tr - new_Tr) / self.ideal_Tr)
-            + (abs(self.ideal_Tk - new_Tk) / self.ideal_Tk)
+            ((self.ideal_Ca - new_Ca) / self.ideal_Ca) ** 2
+            + ((self.ideal_Cb - new_Cb) / self.ideal_Cb) ** 2
+            + ((self.ideal_Tr - new_Tr) / self.ideal_Tr) ** 2
+            + ((self.ideal_Tk - new_Tk) / self.ideal_Tk) ** 2
         )
 
         # update state
