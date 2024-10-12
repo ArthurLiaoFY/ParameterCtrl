@@ -1,114 +1,160 @@
 import numpy as np
+from tensordict import TensorDict
 
 from agent.actor_critic import Actor, ActorCritic, Critic, ReplayBuffer, torch
 
 
 class DDPG(object):
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, inference: bool = False, **kwargs) -> None:
+        self.inference = inference
         self.__dict__.update(**kwargs)
 
         self.actor = Actor(
-            self.ddpg_kwargs.get("state_dim"),
-            self.ddpg_kwargs.get("action_dim"),
+            self.state_dim,
+            self.action_dim,
         )
-        self.actor_optimizer = torch.optim.Adam(
-            self.actor.parameters(),
-            lr=self.ddpg_kwargs.get("learning_rate"),
+        self.critic = Critic(
+            self.state_dim,
+            self.action_dim,
         )
+        self.load_networks()
 
         self.actor_prime = Actor(
-            self.ddpg_kwargs.get("state_dim"),
-            self.ddpg_kwargs.get("action_dim"),
+            self.state_dim,
+            self.action_dim,
         )
         self.actor_prime.load_state_dict(self.actor.state_dict())
 
-        self.critic = Critic(
-            self.ddpg_kwargs.get("state_dim"),
-            self.ddpg_kwargs.get("action_dim"),
-        )
-        self.critic_optimizer = torch.optim.Adam(
-            self.critic.parameters(),
-            lr=self.ddpg_kwargs.get("learning_rate"),
-        )
-
         self.critic_prime = Critic(
-            self.ddpg_kwargs.get("state_dim"),
-            self.ddpg_kwargs.get("action_dim"),
+            self.state_dim,
+            self.action_dim,
         )
         self.critic_prime.load_state_dict(self.critic.state_dict())
 
-        self.max_total_reward = -np.inf
-
-        self.rewards_history = []
-        self.actor_loss_history = []
-        self.critic_loss_history = []
-
-    def select_action(self, state: torch.Tensor):
-        return self.actor(state)
-
-    def train(self, replay_buffer, batch_size=256):
-        buffer = replay_buffer.sample(batch_size)
-
-        target_Q = buffer.get("reward") + self.discount * self.critic_prime(
-            buffer.get("next_state"),
-            self.actor_prime(buffer.get("next_state")),
+        self.actor_optimizer = torch.optim.Adam(
+            self.actor.parameters(),
+            lr=self.learning_rate,
+        )
+        self.critic_optimizer = torch.optim.Adam(
+            self.critic.parameters(),
+            lr=self.learning_rate,
         )
 
-        ### Get current Q estimate
-        current_Q = self.critic(
-            buffer.get("state"),
-            self.actor_prime(buffer.get("state")),
+    def select_action(self, normed_state: torch.Tensor):
+        if self.inference:
+            additional_noise = np.array([0 for _ in range(self.action_dim)])
+        else:
+            self.jitter_noise = max(
+                self.jitter_noise_min,
+                self.jitter_noise * self.jitter_noise_decay_factor,
+            )
+            additional_noise = np.random.randn() * self.jitter_noise
+
+        return self.actor(normed_state).detach().numpy() + additional_noise
+
+    def update_network(self, sample_batch: TensorDict):
+        # Set yi(next_action_score) = ri + γ * Q_prime(si + 1, µ_prime(si + 1 | θ ^ µ_prime) | θ ^ Q_prime)
+
+        next_action_score = sample_batch.get("reward")[
+            :, None
+        ] + self.discount_factor * self.critic_prime(
+            sample_batch.get("next_normed_state"),
+            self.actor_prime(sample_batch.get("next_normed_state")),
         )
 
-        ### Compute critic loss
-        critic_loss = torch.nn.functional.mse_loss(current_Q, target_Q)
+        # Update critic by minimizing the mse loss
+        current_action_score = self.critic(
+            sample_batch.get("normed_state"),
+            sample_batch.get("normed_action"),
+        )
 
-        ### Append the critic loss to the critic_loss_list
-        self.critic_loss_history.append(critic_loss)
-
-        ### Optimize the critic
+        critic_loss = torch.nn.functional.mse_loss(
+            current_action_score, next_action_score
+        )
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
+        # Update the actor policy using the sampled policy gradient:
 
-        ### Compute actor loss
-        actor_loss = -self.critic(
-            buffer.get("state"),
-            self.actor(buffer.get("state")),
-        ).mean()
-
-        ### Append the actor loss to the actor_loss_list.
-        self.actor_loss_history.append(actor_loss)
-
-        ### Optimize the actor
+        ### Compute actor loss (gradient decent so multiply -1)
+        actor_loss = (
+            -1
+            * self.critic(
+                sample_batch.get("normed_state"),
+                self.actor(sample_batch.get("normed_state")),
+            ).mean()
+        )
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
 
-        ### Update the frozen target models
-        for param, target_param in zip(
-            self.critic.parameters(), self.critic_prime.parameters()
-        ):
-            target_param.data.copy_(
-                self.tau * param.data + (1 - self.tau) * target_param.data
+        # Update the target networks:
+        with torch.no_grad():
+            for critic, critic_prime in zip(
+                self.critic.parameters(), self.critic_prime.parameters()
+            ):
+                critic_prime.data.copy_(
+                    ((1 - self.tau) * critic_prime.data) + self.tau * critic.data
+                )
+
+            for actor, actor_prime in zip(
+                self.actor.parameters(), self.actor_prime.parameters()
+            ):
+                actor_prime.data.copy_(
+                    ((1 - self.tau) * actor_prime.data) + self.tau * actor.data
+                )
+
+        return (
+            actor_loss,
+            critic_loss,
+        )
+
+    def update_lr(self) -> None:
+        self.learning_rate = max(
+            self.learning_rate_min,
+            self.learning_rate * self.learning_rate_decay_factor,
+        )
+
+    def save_networks(
+        self,
+        model_file_path: str = "./agent/trained_agent",
+        prefix: str = "",
+        suffix: str = "",
+        actor_name: str = "ddpg_actor_network",
+        critic_name: str = "ddpg_critic_network",
+    ):
+        torch.save(
+            self.actor.state_dict(),
+            f"{model_file_path}/{prefix}{actor_name}{suffix}.pt",
+        )
+        torch.save(
+            self.critic.state_dict(),
+            f"{model_file_path}/{prefix}{critic_name}{suffix}.pt",
+        )
+
+    def load_networks(
+        self,
+        model_file_path: str = "./agent/trained_agent",
+        prefix: str = "",
+        suffix: str = "",
+        actor_name: str = "ddpg_actor_network",
+        critic_name: str = "ddpg_critic_network",
+    ):
+        try:
+            self.actor.load_state_dict(
+                torch.load(
+                    f"{model_file_path}/{prefix}{actor_name}{suffix}.pt",
+                    weights_only=True,
+                )
             )
-
-        for param, target_param in zip(
-            self.actor.parameters(), self.actor_prime.parameters()
-        ):
-            target_param.data.copy_(
-                self.tau * param.data + (1 - self.tau) * target_param.data
+            self.critic.load_state_dict(
+                torch.load(
+                    f"{model_file_path}/{prefix}{critic_name}{suffix}.pt",
+                    weights_only=True,
+                )
             )
-
-    def save(self, dir, ep):
-
-        torch.save(self.critic.state_dict(), dir + "/model/_critic" + str(ep))
-        torch.save(self.actor.state_dict(), dir + "/model/_actor" + str(ep))
-
-    def load(self, dir, ep):
-
-        self.critic.load_state_dict(torch.load(dir + "/model/_critic" + str(ep)))
-        self.critic_prime.load_state_dict(torch.load(dir + "/model/_critic" + str(ep)))
-
-        self.actor.load_state_dict(torch.load(dir + "/model/_actor" + str(ep)))
-        self.actor_prime.load_state_dict(torch.load(dir + "/model/_actor" + str(ep)))
+            print(
+                f"Found trained model under {model_file_path}, weights have been loaded."
+            )
+        except FileNotFoundError:
+            pass

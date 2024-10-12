@@ -4,3 +4,6 @@ test*
 *.html
 *.npy
 buffer_data
+*.png
+.Ds_Store
+*.pt
