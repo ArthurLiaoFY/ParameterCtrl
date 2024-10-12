@@ -6,3 +6,4 @@ test*
 buffer_data
 *.png
 .Ds_Store
+*.pt
