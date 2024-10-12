@@ -20,12 +20,13 @@ class CollectBufferData:
 
         self.replay_buffer = ReplayBuffer(
             storage=LazyTensorStorage(
-                max_size=self.ddpg_kwargs.get("buffer_size"),
+                max_size=self.replay_buffer_kwargs.get("buffer_size"),
             )
         )
 
         try:
-            self.load_replay_buffer()
+            self.load_replay_buffer(
+            )
 
         except FileNotFoundError:
             pass
@@ -80,15 +81,16 @@ class CollectBufferData:
             )
 
         if save:
-            self.save_replay_buffer()
+            self.save_replay_buffer(
+            )
 
     def save_replay_buffer(self) -> None:
-        self.replay_buffer.dumps(self.ddpg_kwargs.get("replay_buffer_dir"))
-        pass
+        print(f"buffer data save to dir: {self.replay_buffer_kwargs.get("replay_buffer_dir")}")
+        self.replay_buffer.dumps(self.replay_buffer_kwargs.get("replay_buffer_dir"))
 
     def load_replay_buffer(self) -> None:
-        self.replay_buffer.loads(self.ddpg_kwargs.get("replay_buffer_dir"))
-        pass
+        print(f"buffer data load from dir: {self.replay_buffer_kwargs.get("replay_buffer_dir")}")
+        self.replay_buffer.loads(self.replay_buffer_kwargs.get("replay_buffer_dir"))
 
 
 class TrainQAgent:
@@ -258,7 +260,6 @@ class TrainDDPG:
                     normed_state=current_normed_state_tensor
                 )
 
-                # TODO: torch.Tensor(tuple(v for v in self.env.state.values())) to function
                 step_loss = self.env.step(
                     action=self.env.revert_normed_action(normed_action=normed_action)
                 )
@@ -310,13 +311,11 @@ class TrainDDPG:
                 # return back to training mode
                 self.ddpg.inference = False
 
-                buffer_data.save_replay_buffer()
+                buffer_data.save_replay_buffer(
+                )
 
         if plot_loss_trend:
             self.plot_loss_trend()
-
-    # def update_buffer_data(self):
-    #     replay_buffer.dumps(self.ddpg_kwargs.get("replay_buffer_dir"))
 
     def plot_loss_trend(
         self,
@@ -336,9 +335,3 @@ class TrainDDPG:
         plotly.offline.plot(
             figure_or_data=fig, filename=f"{file_path}/{prefix}{fig_name}{suffix}.html"
         )
-
-
-# tcstra = TrainQAgent(**training_kwargs)
-
-# tcstra.train_agent(plot_reward_trend=True)
-# tcstra.save_table(prefix="CSTR_Q_")
