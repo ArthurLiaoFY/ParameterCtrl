@@ -6,7 +6,7 @@ from torchrl.data import ReplayBuffer
 from agent.actor_critic import Actor, ActorCritic, Critic
 
 
-class DDPG(object):
+class DeepDeterministicPolicyGradient(object):
     def __init__(self, inference: bool = False, **kwargs) -> None:
         self.inference = inference
         self.__dict__.update(**kwargs)

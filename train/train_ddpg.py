@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from agent.ddpg import DDPG
+from agent.ddpg import DeepDeterministicPolicyGradient
 from cstr_env import CSTREnv
 from train.collect_buffer_data import CollectBufferData
 from utils.plot_f import plot_inference_result, plot_reward_trend
@@ -13,7 +13,7 @@ class TrainDDPG:
     def __init__(self, **kwargs) -> None:
         self.__dict__.update(**kwargs)
         self.env = CSTREnv(**self.env_kwargs)
-        self.ddpg = DDPG(**self.ddpg_kwargs)
+        self.ddpg = DeepDeterministicPolicyGradient(**self.ddpg_kwargs)
 
         self.max_total_reward = -np.inf
 
