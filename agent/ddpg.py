@@ -1,7 +1,9 @@
 import numpy as np
+import torch
 from tensordict import TensorDict
+from torchrl.data import ReplayBuffer
 
-from agent.actor_critic import Actor, ActorCritic, Critic, ReplayBuffer, torch
+from agent.actor_critic import Actor, ActorCritic, Critic
 
 
 class DDPG(object):
