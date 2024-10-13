@@ -54,6 +54,7 @@ class TrainDDPG:
     def train_agent(
         self,
         buffer_data: CollectBufferData,
+        save_traj_to_buffer: bool = True,
         save_network: bool = True,
     ):
         inference_traj = {
@@ -145,8 +146,8 @@ class TrainDDPG:
 
                 # return back to training mode
                 self.ddpg.inference = False
-
-                buffer_data.save_replay_buffer()
+                if save_traj_to_buffer:
+                    buffer_data.save_replay_buffer()
 
         plot_inference_result(inference_traj=inference_traj)
         plot_reward_trend(rewards=self.episode_loss_traj)
