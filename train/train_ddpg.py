@@ -153,4 +153,4 @@ class TrainDDPG:
         plot_reward_trend(rewards=self.episode_loss_traj)
 
         if save_network:
-            self.ddpg.save_networks()
+            self.ddpg.save_network()

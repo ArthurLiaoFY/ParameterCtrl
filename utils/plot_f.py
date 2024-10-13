@@ -1,9 +1,7 @@
-import matplotlib.pyplot as plt
+import numpy as np
 import plotly
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-
-from cstr_env import CSTREnv, np
 
 
 def plot_reward_trend(

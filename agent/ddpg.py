@@ -1,9 +1,41 @@
 import numpy as np
 import torch
 from tensordict import TensorDict
-from torchrl.data import ReplayBuffer
 
-from agent.actor_critic import Actor, ActorCritic, Critic
+
+class Actor(torch.nn.Module):
+    def __init__(self, state_dim: int, action_dim: int):
+        super(Actor, self).__init__()
+        self.actor = torch.nn.Sequential(
+            torch.nn.Linear(state_dim, 256),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256, 256),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256, action_dim),
+        )
+
+    def forward(self, state):
+        return torch.tanh(self.actor(state))
+
+
+class Critic(torch.nn.Module):
+    def __init__(self, state_dim: int, action_dim: int):
+        super(Critic, self).__init__()
+        self.critic = torch.nn.Sequential(
+            torch.nn.Linear(state_dim + action_dim, 256),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256, 256),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256, 1),
+        )
+
+    def forward(self, state, action):
+        return self.critic(
+            torch.cat(
+                tensors=[state, action],
+                dim=1,
+            ),
+        )
 
 
 class DeepDeterministicPolicyGradient(object):
@@ -19,7 +51,7 @@ class DeepDeterministicPolicyGradient(object):
             self.state_dim,
             self.action_dim,
         )
-        self.load_networks()
+        self.load_network()
 
         self.actor_prime = Actor(
             self.state_dim,
@@ -44,7 +76,7 @@ class DeepDeterministicPolicyGradient(object):
 
     def select_action(self, normed_state: torch.Tensor):
         if self.inference:
-            additional_noise = np.array([0 for _ in range(self.action_dim)])
+            additional_noise = np.array([0.0 for _ in range(self.action_dim)])
         else:
             self.jitter_noise = max(
                 self.jitter_noise_min,
@@ -57,7 +89,7 @@ class DeepDeterministicPolicyGradient(object):
     def update_network(self, sample_batch: TensorDict):
         # Set yi(next_action_score) = ri + γ * Q_prime(si + 1, µ_prime(si + 1 | θ ^ µ_prime) | θ ^ Q_prime)
 
-        next_action_score = sample_batch.get("reward")[
+        next_discounted_reward = sample_batch.get("reward")[
             :, None
         ] + self.discount_factor * self.critic_prime(
             sample_batch.get("next_normed_state"),
@@ -65,13 +97,13 @@ class DeepDeterministicPolicyGradient(object):
         )
 
         # Update critic by minimizing the mse loss
-        current_action_score = self.critic(
+        current_reward = self.critic(
             sample_batch.get("normed_state"),
             sample_batch.get("normed_action"),
         )
 
         critic_loss = torch.nn.functional.mse_loss(
-            current_action_score, next_action_score
+            current_reward, next_discounted_reward
         )
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -117,7 +149,7 @@ class DeepDeterministicPolicyGradient(object):
             self.learning_rate * self.learning_rate_decay_factor,
         )
 
-    def save_networks(
+    def save_network(
         self,
         model_file_path: str = "./agent/trained_agent",
         prefix: str = "",
@@ -134,7 +166,7 @@ class DeepDeterministicPolicyGradient(object):
             f"{model_file_path}/{prefix}{critic_name}{suffix}.pt",
         )
 
-    def load_networks(
+    def load_network(
         self,
         model_file_path: str = "./agent/trained_agent",
         prefix: str = "",
