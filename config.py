@@ -62,7 +62,7 @@ env_kwargs = {
     "noise": 0.1,
     # ---------------
     "upper_F": 100.0,
-    "lower_F": 0.0,
+    "lower_F": 5.0,
     "upper_Q": 0.0,
     "lower_Q": -8500.0,
 }

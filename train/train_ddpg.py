@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from agent.ddpg import DDPG
+from agent.ddpg import DeepDeterministicPolicyGradient
 from cstr_env import CSTREnv
 from train.collect_buffer_data import CollectBufferData
 from utils.plot_f import plot_inference_result, plot_reward_trend
@@ -13,7 +13,7 @@ class TrainDDPG:
     def __init__(self, **kwargs) -> None:
         self.__dict__.update(**kwargs)
         self.env = CSTREnv(**self.env_kwargs)
-        self.ddpg = DDPG(**self.ddpg_kwargs)
+        self.ddpg = DeepDeterministicPolicyGradient(**self.ddpg_kwargs)
 
         self.max_total_reward = -np.inf
 
@@ -54,6 +54,7 @@ class TrainDDPG:
     def train_agent(
         self,
         buffer_data: CollectBufferData,
+        save_traj_to_buffer: bool = True,
         save_network: bool = True,
     ):
         inference_traj = {
@@ -145,11 +146,11 @@ class TrainDDPG:
 
                 # return back to training mode
                 self.ddpg.inference = False
-
-                buffer_data.save_replay_buffer()
+                if save_traj_to_buffer:
+                    buffer_data.save_replay_buffer()
 
         plot_inference_result(inference_traj=inference_traj)
         plot_reward_trend(rewards=self.episode_loss_traj)
 
         if save_network:
-            self.ddpg.save_networks()
+            self.ddpg.save_network()

@@ -1,8 +1,8 @@
+import torch
 from tensordict import TensorDict
-from torchrl.data import LazyTensorStorage
+from torchrl.data import LazyTensorStorage, ReplayBuffer
 from tqdm import tqdm
 
-from agent.actor_critic import ReplayBuffer, torch
 from cstr_env import CSTREnv, np
 
 
