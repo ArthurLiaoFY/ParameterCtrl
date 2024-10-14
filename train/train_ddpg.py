@@ -17,11 +17,24 @@ class TrainDDPG:
 
         self.max_total_reward = -np.inf
 
-        self.episode_loss_traj = []
+        self.episode_reward_traj = []
         self.actor_loss_history = []
         self.critic_loss_history = []
 
-    def inference_once(self):
+        self.inference_traj = {
+            "ideal_Ca": self.env.ideal_Ca,
+            "ideal_Cb": self.env.ideal_Cb,
+            "ideal_Tr": self.env.ideal_Tr,
+            "ideal_Tk": self.env.ideal_Tk,
+            "Ca": {},
+            "Cb": {},
+            "Tr": {},
+            "Tk": {},
+            "F": {},
+            "Q": {},
+        }
+
+    def inference_once(self, episode):
         self.env.reset()
         inference_reward = 0
         cnt = 0
@@ -42,14 +55,13 @@ class TrainDDPG:
 
             if cnt == self.early_stop_patience:
                 break
-        return (
-            self.env.Ca_traj,
-            self.env.Cb_traj,
-            self.env.Tr_traj,
-            self.env.Tk_traj,
-            self.env.F_traj,
-            self.env.Q_traj,
-        )
+
+        self.inference_traj["Ca"][episode] = self.env.Ca_traj
+        self.inference_traj["Cb"][episode] = self.env.Cb_traj
+        self.inference_traj["Tr"][episode] = self.env.Tr_traj
+        self.inference_traj["Tk"][episode] = self.env.Tk_traj
+        self.inference_traj["F"][episode] = self.env.F_traj
+        self.inference_traj["Q"][episode] = self.env.Q_traj
 
     def train_agent(
         self,
@@ -57,18 +69,7 @@ class TrainDDPG:
         save_traj_to_buffer: bool = True,
         save_network: bool = True,
     ):
-        inference_traj = {
-            "ideal_Ca": self.env.ideal_Ca,
-            "ideal_Cb": self.env.ideal_Cb,
-            "ideal_Tr": self.env.ideal_Tr,
-            "ideal_Tk": self.env.ideal_Tk,
-            "Ca": {},
-            "Cb": {},
-            "Tr": {},
-            "Tk": {},
-            "F": {},
-            "Q": {},
-        }
+
         for episode in range(1, self.n_episodes + 1):
             self.env.reset()
             episode_loss = 0
@@ -123,34 +124,19 @@ class TrainDDPG:
             print(f"episode loss : {round(episode_loss, ndigits=4)}")
             print(f"jitter noise : {round(self.ddpg.jitter_noise, ndigits=4)}")
             print(f"learning rate : {round(self.ddpg.learning_rate, ndigits=4)}")
-            self.episode_loss_traj.append(episode_loss)
+            self.episode_reward_traj.append(episode_loss)
             self.ddpg.update_lr()
             if episode % 200 == 0:
                 # turn to inference mode
                 self.ddpg.inference = True
-                (
-                    Ca_traj,
-                    Cb_traj,
-                    Tr_traj,
-                    Tk_traj,
-                    F_traj,
-                    Q_traj,
-                ) = self.inference_once()
-
-                inference_traj["Ca"][episode] = Ca_traj
-                inference_traj["Cb"][episode] = Cb_traj
-                inference_traj["Tr"][episode] = Tr_traj
-                inference_traj["Tk"][episode] = Tk_traj
-                inference_traj["F"][episode] = F_traj
-                inference_traj["Q"][episode] = Q_traj
-
+                self.inference_once(episode)
                 # return back to training mode
                 self.ddpg.inference = False
                 if save_traj_to_buffer:
                     buffer_data.save_replay_buffer()
 
-        plot_inference_result(inference_traj=inference_traj)
-        plot_reward_trend(rewards=self.episode_loss_traj)
+        plot_inference_result(inference_traj=self.inference_traj)
+        plot_reward_trend(rewards=self.episode_reward_traj)
 
         if save_network:
             self.ddpg.save_network()
