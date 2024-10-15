@@ -112,7 +112,7 @@ class TrainDDPG:
                 sample_batch = buffer_data.replay_buffer.sample(
                     self.ddpg_kwargs.get("batch_size")
                 )
-                actor_loss, critic_loss = self.ddpg.update_network(sample_batch)
+                actor_loss, critic_loss = self.ddpg.update_policy(sample_batch)
 
                 self.actor_loss_history.append(actor_loss.detach().numpy().item())
                 self.critic_loss_history.append(critic_loss.detach().numpy().item())

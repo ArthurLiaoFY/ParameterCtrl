@@ -86,7 +86,7 @@ class DeepDeterministicPolicyGradient(object):
 
         return self.actor(normed_state).detach().numpy() + additional_noise
 
-    def update_network(self, sample_batch: TensorDict):
+    def update_policy(self, sample_batch: TensorDict):
         # Set yi(next_action_score) = ri + γ * Q_prime(si + 1, µ_prime(si + 1 | θ ^ µ_prime) | θ ^ Q_prime)
 
         next_discounted_reward = sample_batch.get("reward")[
