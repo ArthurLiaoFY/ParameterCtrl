@@ -34,10 +34,13 @@ class TrainDDPG:
             "Q": {},
         }
 
-    def inference_once(self, episode):
+    def inference_once(self, episode: int):
         self.env.reset()
         inference_reward = 0
         cnt = 0
+
+        self.ddpg.shutdown_explore
+
         for step in range(self.step_per_episode):
             normed_action = self.ddpg.select_action(
                 normed_state=torch.Tensor(
@@ -62,6 +65,9 @@ class TrainDDPG:
         self.inference_traj["Tk"][episode] = self.env.Tk_traj
         self.inference_traj["F"][episode] = self.env.F_traj
         self.inference_traj["Q"][episode] = self.env.Q_traj
+
+        # restart explore
+        self.ddpg.start_explore
 
     def train_agent(
         self,
@@ -127,11 +133,7 @@ class TrainDDPG:
             self.episode_reward_traj.append(episode_loss)
             self.ddpg.update_lr()
             if episode % 200 == 0:
-                # turn to inference mode
-                self.ddpg.inference = True
                 self.inference_once(episode)
-                # return back to training mode
-                self.ddpg.inference = False
                 if save_traj_to_buffer:
                     buffer_data.save_replay_buffer()
 
