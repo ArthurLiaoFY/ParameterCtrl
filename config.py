@@ -70,4 +70,5 @@ training_kwargs = {
     "env_kwargs": env_kwargs,
     "replay_buffer_kwargs": replay_buffer_kwargs,
     "ddpg_kwargs": ddpg_kwargs,
+    "ddqn_kwargs": ddqn_kwargs,
 }
