@@ -39,8 +39,8 @@ class Critic(torch.nn.Module):
 
 
 class DeepDeterministicPolicyGradient(object):
-    def __init__(self, inference: bool = False, **kwargs) -> None:
-        self.inference = inference
+    def __init__(self, **kwargs) -> None:
+        self.start_explore
         self.__dict__.update(**kwargs)
 
         self.actor = Actor(
@@ -75,7 +75,7 @@ class DeepDeterministicPolicyGradient(object):
         )
 
     def select_action(self, normed_state: torch.Tensor):
-        if self.inference:
+        if not self.explore:
             additional_noise = np.array([0.0 for _ in range(self.action_dim)])
         else:
             self.jitter_noise = max(
@@ -148,6 +148,14 @@ class DeepDeterministicPolicyGradient(object):
             self.learning_rate_min,
             self.learning_rate * self.learning_rate_decay_factor,
         )
+
+    @property
+    def shutdown_explore(self) -> None:
+        self.explore = False
+
+    @property
+    def start_explore(self) -> None:
+        self.explore = True
 
     def save_network(
         self,
