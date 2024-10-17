@@ -92,10 +92,10 @@ class DoubleDeepQNetwork:
 
     def save_network(
         self,
-        model_file_path: str = ".",
+        model_file_path: str = "./agent/trained_agent",
         prefix: str = "",
         suffix: str = "",
-        dqn_name: str = "dqn",
+        dqn_name: str = "dqn_network",
     ) -> None:
         torch.save(
             self.dqn.state_dict(),
@@ -104,10 +104,10 @@ class DoubleDeepQNetwork:
 
     def load_network(
         self,
-        model_file_path: str = ".",
+        model_file_path: str = "./agent/trained_agent",
         prefix: str = "",
         suffix: str = "",
-        dqn_name: str = "dqn",
+        dqn_name: str = "dqn_network",
     ) -> None:
         try:
             self.dqn.load_state_dict(
