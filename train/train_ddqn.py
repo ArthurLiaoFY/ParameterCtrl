@@ -147,4 +147,4 @@ class TrainDDQN:
         plot_reward_trend(rewards=self.episode_reward_traj)
 
         if save_network:
-            self.ddpg.save_network()
+            self.ddqn.save_network()
