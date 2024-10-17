@@ -14,6 +14,22 @@ ddpg_kwargs = {
     "tau": 0.001,
 }
 
+ddqn_kwargs = {
+    # -------------------------------
+    "state_dim": 6,
+    "action_dim": 2,
+    # -------------------------------
+    "batch_size": 256,
+    "learning_rate": 1e-2,
+    "learning_rate_min": 3e-4,
+    "learning_rate_decay_factor": 1 - 1e-3,
+    "discount_factor": 0.99,
+    "jitter_noise": 0.2,
+    "jitter_noise_min": 1e-5,
+    "jitter_noise_decay_factor": 1 - 2e-4,
+    "tau": 0.001,
+}
+
 # Replay buffer
 replay_buffer_kwargs = {
     # -------------------------------
