@@ -138,7 +138,7 @@ class TrainDDQN:
             print(f"learning rate : {round(self.ddqn.learning_rate, ndigits=4)}")
             self.episode_reward_traj.append(episode_loss)
             self.ddqn.update_lr()
-            if episode % 200 == 0:
+            if episode % self.inference_each_k_episode == 0:
                 self.inference_once(episode)
                 if save_traj_to_buffer:
                     buffer_data.save_replay_buffer()

@@ -15,7 +15,7 @@ class TrainDDPG:
         self.env = CSTREnv(**self.env_kwargs)
         self.ddpg = DeepDeterministicPolicyGradient(**self.ddpg_kwargs)
 
-        self.max_total_reward = -np.inf
+        self.max_train_reward = -np.inf
 
         self.episode_reward_traj = []
         self.actor_loss_history = []
@@ -132,7 +132,7 @@ class TrainDDPG:
             print(f"learning rate : {round(self.ddpg.learning_rate, ndigits=4)}")
             self.episode_reward_traj.append(episode_loss)
             self.ddpg.update_lr()
-            if episode % 200 == 0:
+            if episode % self.inference_each_k_episode == 0:
                 self.inference_once(episode)
                 if save_traj_to_buffer:
                     buffer_data.save_replay_buffer()
