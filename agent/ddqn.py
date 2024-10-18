@@ -20,14 +20,18 @@ class DeepQNetwork(torch.nn.Module):
 
 class DoubleDeepQNetwork:
     def __init__(self, **kwargs) -> None:
-        self.__dict__.update(kwargs)
         self.start_explore
+        self.__dict__.update(kwargs)
 
         # actor network
-        self.dqn = DeepQNetwork(state_dim=self.state_dim, action_dim=self.action_dim)
+        self.dqn = DeepQNetwork(
+            state_dim=self.state_dim,
+            action_dim=self.action_dim,
+        )
         # target network
         self.dqn_prime = DeepQNetwork(
-            state_dim=self.state_dim, action_dim=self.action_dim
+            state_dim=self.state_dim,
+            action_dim=self.action_dim,
         )
         self.load_network()
         self.dqn_prime.load_state_dict(self.dqn.state_dict())
@@ -54,10 +58,12 @@ class DoubleDeepQNetwork:
         self,
         sample_batch: TensorDict,
     ) -> None:
-
-        td_target = sample_batch.get("reward")[
-            :, None
-        ] + self.discount_factor * self.dqn_prime(sample_batch.get("next_normed_state"))
+        with torch.no_grad():
+            td_target = sample_batch.get("reward")[
+                :, None
+            ] + self.discount_factor * self.dqn_prime(
+                sample_batch.get("next_normed_state")
+            )
 
         dqn_loss = torch.nn.functional.huber_loss(
             td_target,
