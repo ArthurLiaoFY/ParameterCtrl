@@ -102,9 +102,7 @@ class DeepDeterministicPolicyGradient(object):
             sample_batch.get("normed_action"),
         )
 
-        critic_loss = torch.nn.functional.huber_loss(
-            current_reward, td_target
-        )
+        critic_loss = torch.nn.functional.huber_loss(current_reward, td_target)
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
@@ -122,7 +120,7 @@ class DeepDeterministicPolicyGradient(object):
         actor_loss.backward()
         self.actor_optimizer.step()
 
-        # θ′ ← τ θ + (1 −τ )θ′
+        # θ′ ← τ θ + (1 − τ) θ′
         with torch.no_grad():
             for critic, critic_prime in zip(
                 self.critic.parameters(), self.critic_prime.parameters()

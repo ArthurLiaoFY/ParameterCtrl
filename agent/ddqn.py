@@ -74,7 +74,7 @@ class DoubleDeepQNetwork:
         dqn_loss.backward()
         self.dqn_optimizer.step()
 
-        # θ′ ← τ θ + (1 −τ )θ′
+        # θ′ ← τ θ + (1 − τ) θ′
         with torch.no_grad():
             for dqn, dqn_prime in zip(
                 self.dqn.parameters(), self.dqn_prime.parameters()
