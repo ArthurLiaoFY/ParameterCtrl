@@ -30,6 +30,7 @@ class DoubleDeepQNetwork:
             state_dim=self.state_dim, action_dim=self.action_dim
         )
         self.load_network()
+        self.dqn_prime.load_state_dict(self.dqn.state_dict())
 
         self.dqn_optimizer = torch.optim.Adam(
             self.dqn.parameters(),
@@ -40,6 +41,7 @@ class DoubleDeepQNetwork:
         if not self.explore:
             additional_noise = np.array([0.0 for _ in range(self.action_dim)])
         else:
+            # add noise
             self.jitter_noise = max(
                 self.jitter_noise_min,
                 self.jitter_noise * self.jitter_noise_decay_factor,
@@ -57,7 +59,7 @@ class DoubleDeepQNetwork:
             :, None
         ] + self.discount_factor * self.dqn_prime(sample_batch.get("next_normed_state"))
 
-        dqn_loss = torch.nn.functional.mse_loss(
+        dqn_loss = torch.nn.functional.huber_loss(
             td_target,
             self.dqn(sample_batch.get("normed_state")),
         )
@@ -66,6 +68,7 @@ class DoubleDeepQNetwork:
         dqn_loss.backward()
         self.dqn_optimizer.step()
 
+        # θ′ ← τ θ + (1 −τ )θ′
         with torch.no_grad():
             for dqn, dqn_prime in zip(
                 self.dqn.parameters(), self.dqn_prime.parameters()
