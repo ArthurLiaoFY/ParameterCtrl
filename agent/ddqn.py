@@ -125,7 +125,6 @@ class DoubleDeepQNetwork:
                     weights_only=True,
                 )
             )
-            self.dqn_prime.load_state_dict(self.dqn.state_dict())
             print(
                 f"Found trained model under {model_file_path}, weights have been loaded."
             )
