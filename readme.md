@@ -4,7 +4,7 @@
 
 ---
 
-## 功能簡介
+## CSTR 動態環境
 
 ### 1. **CSTR 動態模型 (`cstr_system`)**
 `cstr_system` 定義了 CSTR 系統的動態行為，使用**常微分方程（ODEs）**描述反應器內部狀態的變化。
@@ -47,15 +47,6 @@
 #### 獎勵函數
 - 將系統狀態（濃度、溫度）與目標值的偏差最小化，以指導強化學習代理學習最優控制策略。
 
----
-
-## 使用案例
-
-# CSTR 模擬環境與 DDPG 強化學習
-
-本專案實現了一個基於 **連續攪拌槽反應器（CSTR）** 的模擬環境，並使用 **Deep Deterministic Policy Gradient (DDPG)** 演算法進行訓練，探索最佳的控制策略。
-
----
 
 ## **DDPG 強化學習演算法**
 採用 Deep Deterministic Policy Gradient (DDPG) 演算法，專門設計用於處理連續型狀態和動作空間。
