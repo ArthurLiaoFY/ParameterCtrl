@@ -17,6 +17,7 @@ def plot_reward_trend(
     )
     fig.update_layout(
         title_text="Reward Trend",
+        template="plotly_white",
     )
 
     plotly.offline.plot(
@@ -59,6 +60,7 @@ def plot_inference_result(
 
     fig1.update_layout(
         title_text="Observed Value Trend",
+        template="plotly_white",
     )
 
     fig2 = make_subplots(rows=2, cols=1, subplot_titles=("F", "Q"))
@@ -79,6 +81,7 @@ def plot_inference_result(
 
     fig2.update_layout(
         title_text="Input Value Trend",
+        template="plotly_white",
     )
 
     plotly.offline.plot(
