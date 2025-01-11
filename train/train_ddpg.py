@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from agent.ddpg import DeepDeterministicPolicyGradient
+from agent.ddpg_agent import DeepDeterministicPolicyGradient
 from cstr_env import CSTREnv
 from train.collect_buffer_data import CollectBufferData
 from utils.plot_f import plot_inference_result, plot_reward_trend
