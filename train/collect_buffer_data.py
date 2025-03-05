@@ -1,6 +1,7 @@
 import torch
 from tensordict import TensorDict
 from torchrl.data import LazyTensorStorage, ReplayBuffer
+from torchrl.data.replay_buffers.samplers import PrioritizedSampler
 from tqdm import tqdm
 
 from cstr_env import CSTREnv, np
@@ -14,7 +15,12 @@ class CollectBufferData:
         self.replay_buffer = ReplayBuffer(
             storage=LazyTensorStorage(
                 max_size=self.replay_buffer_kwargs.get("buffer_size"),
-            )
+            ),
+            sampler=PrioritizedSampler(
+                max_capacity=int(self.replay_buffer_kwargs.get("buffer_size")),
+                alpha=self.replay_buffer_kwargs.get("prioritized_sampler").get("alpha"),
+                beta=self.replay_buffer_kwargs.get("prioritized_sampler").get("beta"),
+            ),
         )
         self.load_replay_buffer()
 
@@ -62,9 +68,14 @@ class CollectBufferData:
                         "next_normed_state": torch.Tensor(
                             np.array(next_normed_state_list)
                         ),
+                        "priority": torch.Tensor(-1 * np.array(reward_list)),
                     },
                     batch_size=[self.step_per_episode],
                 )
+            )
+            self.replay_buffer.update_priority(
+                index=torch.tensor([i for i in range(self.step_per_episode)]),
+                priority=torch.Tensor(-1 * np.array(reward_list)),
             )
 
         if save:

@@ -17,8 +17,12 @@ ddpg_kwargs = {
 # Replay buffer
 replay_buffer_kwargs = {
     # -------------------------------
-    "buffer_size": 1e7,
+    "buffer_size": 1e6,
     "replay_buffer_dir": "./buffer_data",
+    "prioritized_sampler": {
+        "alpha": 1.0,
+        "beta": 1.0,
+    },
 }
 
 # Env
