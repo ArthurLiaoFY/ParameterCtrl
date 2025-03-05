@@ -1,7 +1,6 @@
 # %%
 import numpy as np
 import torch
-from tensordict import TensorDict
 
 from train.collect_buffer_data import CollectBufferData
 from utils.plot_f import plot_inference_result, plot_reward_trend
@@ -13,7 +12,6 @@ class TrainAgent:
         self.env = env
         self.buffer_data = CollectBufferData(env=self.env, **kwargs)
         self.agent = agent
-
 
         self.max_train_reward = -np.inf
 
