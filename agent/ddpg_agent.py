@@ -74,7 +74,7 @@ class DeepDeterministicPolicyGradient(object):
             lr=self.learning_rate,
         )
 
-    def select_action(self, normed_state: torch.Tensor):
+    def select_action(self, state: torch.Tensor):
         if not self.explore:
             additional_noise = np.array([0.0 for _ in range(self.action_dim)])
         else:
@@ -84,7 +84,7 @@ class DeepDeterministicPolicyGradient(object):
             )
             additional_noise = np.random.randn() * self.jitter_noise
 
-        return self.actor(normed_state).detach().numpy() + additional_noise
+        return self.actor(state).detach().numpy() + additional_noise
 
     def update_policy(self, sample_batch: TensorDict):
         # Set yi(next_action_score) = ri + γ * Q_prime(si + 1, µ_prime(si + 1 | θ ^ µ_prime) | θ ^ Q_prime)
@@ -92,14 +92,14 @@ class DeepDeterministicPolicyGradient(object):
             td_target = sample_batch.get("reward")[
                 :, None
             ] + self.discount_factor * self.critic_prime(
-                sample_batch.get("next_normed_state"),
-                self.actor_prime(sample_batch.get("next_normed_state")),
+                sample_batch.get("next_state"),
+                self.actor_prime(sample_batch.get("next_state")),
             )
 
         # Update critic by minimizing the mse loss
         current_reward = self.critic(
-            sample_batch.get("normed_state"),
-            sample_batch.get("normed_action"),
+            sample_batch.get("state"),
+            sample_batch.get("action"),
         )
 
         critic_loss = torch.nn.functional.huber_loss(current_reward, td_target)
@@ -112,8 +112,8 @@ class DeepDeterministicPolicyGradient(object):
         actor_loss = (
             -1
             * self.critic(
-                sample_batch.get("normed_state"),
-                self.actor(sample_batch.get("normed_state")),
+                sample_batch.get("state"),
+                self.actor(sample_batch.get("state")),
             ).mean()
         )
         self.actor_optimizer.zero_grad()
