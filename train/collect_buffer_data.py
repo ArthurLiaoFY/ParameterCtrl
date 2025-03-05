@@ -24,8 +24,8 @@ class CollectBufferData:
         )
         self.load_replay_buffer()
 
-    def extend_buffer_data(self, extend_amount: int, save: bool = True) -> None:
-        for _ in tqdm(range(extend_amount)):
+    def init_buffer_data(self, init_amount: int) -> None:
+        for _ in tqdm(range(init_amount)):
             self.env.reset()
             normed_state_list = []
             normed_action_list = []
@@ -62,12 +62,10 @@ class CollectBufferData:
             self.replay_buffer.extend(
                 TensorDict(
                     {
-                        "normed_state": torch.Tensor(np.array(normed_state_list)),
-                        "normed_action": torch.Tensor(np.array(normed_action_list)),
+                        "state": torch.Tensor(np.array(normed_state_list)),
+                        "action": torch.Tensor(np.array(normed_action_list)),
                         "reward": torch.Tensor(np.array(reward_list)),
-                        "next_normed_state": torch.Tensor(
-                            np.array(next_normed_state_list)
-                        ),
+                        "next_state": torch.Tensor(np.array(next_normed_state_list)),
                         "priority": torch.Tensor(-1 * np.array(reward_list)),
                     },
                     batch_size=[self.step_per_episode],
@@ -78,8 +76,31 @@ class CollectBufferData:
                 priority=torch.Tensor(-1 * np.array(reward_list)),
             )
 
-        if save:
-            self.save_replay_buffer()
+    def extend_buffer_data(
+        self, state: list, action: list, reward: list, next_state: list
+    ) -> None:
+
+        self.replay_buffer.extend(
+            TensorDict(
+                {
+                    "state": torch.Tensor(np.array(state)),
+                    "action": torch.Tensor(np.array(action)),
+                    "reward": torch.Tensor(np.array(reward)),
+                    "next_state": torch.Tensor(np.array(next_state)),
+                    "priority": torch.Tensor(-1 * np.array(reward)),
+                },
+                batch_size=[len(reward)],
+            )
+        )
+        self.replay_buffer.update_priority(
+            index=torch.tensor(
+                [i for i in range(self.replay_buffer.__len__(), len(reward))]
+            ),
+            priority=torch.Tensor(-1 * np.array(reward)),
+        )
+
+    def sample_buffer_data(self):
+        pass
 
     def save_replay_buffer(self) -> None:
         print(
