@@ -67,6 +67,21 @@ def cstr_system(y, t, u):
     return dC_adt, dC_bdt, dT_Rdt, dT_Kdt
 
 
+# class Env:
+#     def __init__(self, seed: int | None = None, **kwargs):
+#         if seed is None:
+#             self.seed = np.random
+#         else:
+#             self.seed = np.random.RandomState(seed)
+#         self.__dict__.update(**kwargs)
+
+#     def reset(self):
+#         pass
+
+#     def step(self):
+#         pass
+
+
 class CSTREnv:
     def __init__(self, seed: int | None = None, **kwargs) -> None:
         if seed is None:
@@ -172,10 +187,10 @@ class CSTREnv:
 
         # reward
         reward = -1 * (
-            (abs(self.ideal_Ca - new_Ca) / self.ideal_Ca)
-            + (abs(self.ideal_Cb - new_Cb) / self.ideal_Cb)
-            + (abs(self.ideal_Tr - new_Tr) / self.ideal_Tr)
-            + (abs(self.ideal_Tk - new_Tk) / self.ideal_Tk)
+            abs((self.ideal_Ca - new_Ca) / self.ideal_Ca)
+            + abs((self.ideal_Cb - new_Cb) / self.ideal_Cb)
+            + abs((self.ideal_Tr - new_Tr) / self.ideal_Tr)
+            + abs((self.ideal_Tk - new_Tk) / self.ideal_Tk)
         )
 
         # update state
