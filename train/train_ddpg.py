@@ -22,10 +22,10 @@ class TrainDDPG:
         self.critic_loss_history = []
 
         self.inference_traj = {
-            "ideal_Ca": self.env.ideal_Ca,
-            "ideal_Cb": self.env.ideal_Cb,
-            "ideal_Tr": self.env.ideal_Tr,
-            "ideal_Tk": self.env.ideal_Tk,
+            "ideal_Ca": self.env_kwargs.get("ideal_Ca"),
+            "ideal_Cb": self.env_kwargs.get("ideal_Cb"),
+            "ideal_Tr": self.env_kwargs.get("ideal_Tr"),
+            "ideal_Tk": self.env_kwargs.get("ideal_Tk"),
             "Ca": {},
             "Cb": {},
             "Tr": {},
@@ -69,12 +69,20 @@ class TrainDDPG:
         # restart explore
         self.ddpg.start_explore
 
-    def train_agent(
+    def train_offline_agent(
+        self,
+        buffer_data: CollectBufferData,
+        save_network: bool = True,
+    ):
+        pass
+
+    def train_online_agent(
         self,
         buffer_data: CollectBufferData,
         save_traj_to_buffer: bool = True,
         save_network: bool = True,
     ):
+        self.ddpg.start_explore
 
         for episode in range(1, self.n_episodes + 1):
             self.env.reset()
@@ -101,16 +109,11 @@ class TrainDDPG:
                 next_normed_state_tensor = torch.Tensor(
                     tuple(v for v in self.env.normed_state.values())
                 )
-                buffer_data.replay_buffer.extend(
-                    TensorDict(
-                        {
-                            "normed_state": current_normed_state_tensor[None, :],
-                            "normed_action": torch.Tensor(normed_action)[None, :],
-                            "reward": torch.Tensor([step_loss])[None, :],
-                            "next_normed_state": next_normed_state_tensor[None, :],
-                        },
-                        batch_size=[1],
-                    )
+                buffer_data.extend_buffer_data(
+                    state=current_normed_state_tensor[None, :],
+                    action=torch.Tensor(normed_action)[None, :],
+                    reward=torch.Tensor([step_loss])[None, :],
+                    next_state=next_normed_state_tensor[None, :],
                 )
                 current_normed_state_tensor = next_normed_state_tensor
 
