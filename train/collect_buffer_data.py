@@ -8,9 +8,9 @@ from cstr_env import CSTREnv, np
 
 
 class CollectBufferData:
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, env, **kwargs) -> None:
         self.__dict__.update(**kwargs)
-        self.env = CSTREnv(**self.env_kwargs)
+        self.env = env
 
         self.replay_buffer = ReplayBuffer(
             storage=LazyTensorStorage(
@@ -99,8 +99,8 @@ class CollectBufferData:
             priority=torch.Tensor(-1 * np.array(reward)),
         )
 
-    def sample_buffer_data(self):
-        pass
+    def sample_buffer_data(self, size: int):
+        return self.replay_buffer.sample(batch_size=size)
 
     def save_replay_buffer(self) -> None:
         print(
