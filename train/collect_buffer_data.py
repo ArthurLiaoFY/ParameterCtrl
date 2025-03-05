@@ -1,10 +1,9 @@
+import numpy as np
 import torch
 from tensordict import TensorDict
 from torchrl.data import LazyTensorStorage, ReplayBuffer
 from torchrl.data.replay_buffers.samplers import PrioritizedSampler
 from tqdm import tqdm
-
-from cstr_env import CSTREnv, np
 
 
 class CollectBufferData:
@@ -28,7 +27,7 @@ class CollectBufferData:
         for _ in tqdm(range(init_amount)):
             self.env.reset()
             normed_state_list = []
-            normed_action_list = []
+            action_list = []
             reward_list = []
             next_normed_state_list = []
 
@@ -53,7 +52,7 @@ class CollectBufferData:
                     ]
                 )
 
-                normed_action_list.append(self.env.norm_action(action))
+                action_list.append(self.env.norm_action(action))
                 reward_list.append(self.env.step(action=action))
                 next_normed_state_list.append(
                     tuple(v for v in self.env.normed_state.values())
@@ -63,7 +62,7 @@ class CollectBufferData:
                 TensorDict(
                     {
                         "state": torch.Tensor(np.array(normed_state_list)),
-                        "action": torch.Tensor(np.array(normed_action_list)),
+                        "action": torch.Tensor(np.array(action_list)),
                         "reward": torch.Tensor(np.array(reward_list)),
                         "next_state": torch.Tensor(np.array(next_normed_state_list)),
                         "priority": torch.Tensor(-1 * np.array(reward_list)),

@@ -11,6 +11,6 @@ agent = DeepDeterministicPolicyGradient(**training_kwargs.get("ddpg_kwargs"))
 tddpg = TrainAgent(env=env, agent=agent, **training_kwargs)
 tddpg.train_online_agent(
     save_traj_to_buffer=False,
-    save_network=True,
+    save_network=False,
 )
 # %%

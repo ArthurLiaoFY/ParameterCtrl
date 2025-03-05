@@ -51,11 +51,11 @@ env_kwargs = {
 # Train
 
 training_kwargs = {
-    "n_episodes": 2500,
-    "step_per_episode": 51,
+    "n_episodes": 5000,
+    "step_per_episode": 21,
     "early_stop_patience": 10,
     "step_loss_tolerance": 1e-2,
-    "inference_each_k_episode": 500,
+    "inference_each_k_episode": 1000,
     "env_kwargs": env_kwargs,
     "replay_buffer_kwargs": replay_buffer_kwargs,
     "ddpg_kwargs": ddpg_kwargs,
