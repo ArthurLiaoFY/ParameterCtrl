@@ -2,16 +2,18 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from agent.agent import RLAgent
+
 
 class Actor(torch.nn.Module):
     def __init__(self, state_dim: int, action_dim: int) -> None:
         super(Actor, self).__init__()
         self.actor = torch.nn.Sequential(
-            torch.nn.Linear(state_dim, 256),
+            torch.nn.Linear(state_dim, 64),
             torch.nn.ReLU(),
-            torch.nn.Linear(256, 256),
+            torch.nn.Linear(64, 32),
             torch.nn.ReLU(),
-            torch.nn.Linear(256, action_dim),
+            torch.nn.Linear(32, action_dim),
         )
 
     def forward(self, state):
@@ -22,11 +24,11 @@ class Critic(torch.nn.Module):
     def __init__(self, state_dim: int, action_dim: int) -> None:
         super(Critic, self).__init__()
         self.critic = torch.nn.Sequential(
-            torch.nn.Linear(state_dim + action_dim, 256),
+            torch.nn.Linear(state_dim + action_dim, 64),
             torch.nn.ReLU(),
-            torch.nn.Linear(256, 256),
+            torch.nn.Linear(64, 32),
             torch.nn.ReLU(),
-            torch.nn.Linear(256, 1),
+            torch.nn.Linear(32, 1),
         )
 
     def forward(self, state, action):
@@ -38,7 +40,7 @@ class Critic(torch.nn.Module):
         )
 
 
-class DeepDeterministicPolicyGradient(object):
+class DeepDeterministicPolicyGradient(RLAgent):
     def __init__(self, **kwargs) -> None:
         self.start_explore
         self.__dict__.update(**kwargs)
@@ -89,9 +91,9 @@ class DeepDeterministicPolicyGradient(object):
     def update_policy(self, sample_batch: TensorDict):
         # Set yi(next_action_score) = ri + γ * Q_prime(si + 1, µ_prime(si + 1 | θ ^ µ_prime) | θ ^ Q_prime)
         with torch.no_grad():
-            td_target = sample_batch.get("reward")[
-                :, None
-            ] + self.discount_factor * self.critic_prime(
+            td_target = sample_batch.get(
+                "reward"
+            ) + self.discount_factor * self.critic_prime(
                 sample_batch.get("next_state"),
                 self.actor_prime(sample_batch.get("next_state")),
             )
