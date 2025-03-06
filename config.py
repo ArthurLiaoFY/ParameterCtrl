@@ -1,4 +1,4 @@
-ddpg_kwargs = {
+agent_kwargs = {
     # -------------------------------
     "state_dim": 6,
     "action_dim": 2,
@@ -58,5 +58,5 @@ training_kwargs = {
     "inference_each_k_episode": 2500,
     "env_kwargs": env_kwargs,
     "replay_buffer_kwargs": replay_buffer_kwargs,
-    "ddpg_kwargs": ddpg_kwargs,
+    "agent_kwargs": agent_kwargs,
 }
