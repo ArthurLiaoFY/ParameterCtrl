@@ -34,11 +34,11 @@ class DeepDeterministicPolicyGradient(RLAgent):
         )
         self.critic_prime.load_state_dict(self.critic.state_dict())
 
-        self.actor_optimizer = torch.optim.Adam(
+        self.actor_optimizer = torch.optim.AdamW(
             self.actor.parameters(),
             lr=self.learning_rate,
         )
-        self.critic_optimizer = torch.optim.Adam(
+        self.critic_optimizer = torch.optim.AdamW(
             self.critic.parameters(),
             lr=self.learning_rate,
         )
