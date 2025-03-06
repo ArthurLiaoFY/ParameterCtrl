@@ -23,6 +23,16 @@ class RLAgent(ABC):
             self.learning_rate * self.learning_rate_decay_factor,
         )
 
+    @property
+    @abstractmethod
+    def shutdown_explore(self) -> None:
+        self.explore = False
+
+    @property
+    @abstractmethod
+    def start_explore(self) -> None:
+        self.explore = True
+
     @abstractmethod
     def save_network(
         self,
