@@ -20,9 +20,8 @@ class DeepQNetwork(RLAgent):
             self.state_dim,
             self.action_dim,
         )
-        self.actor_optimizer = torch.optim.RMSprop(
-            self.actor.parameters(),
-            lr=self.learning_rate,
+        self.actor_optimizer = torch.optim.AdamW(
+            self.actor.parameters(), lr=self.learning_rate, amsgrad=True
         )
         self.delay_actor.load_state_dict(self.actor.state_dict())
 

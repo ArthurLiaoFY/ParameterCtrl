@@ -37,10 +37,12 @@ class DeepDeterministicPolicyGradient(RLAgent):
         self.actor_optimizer = torch.optim.AdamW(
             self.actor.parameters(),
             lr=self.learning_rate,
+            amsgrad=True,
         )
         self.critic_optimizer = torch.optim.AdamW(
             self.critic.parameters(),
             lr=self.learning_rate,
+            amsgrad=True,
         )
 
     def select_action(self, state: torch.Tensor):
