@@ -2,12 +2,13 @@
 import numpy as np
 import torch
 
+from agent.agent import RLAgent
 from train.collect_buffer_data import CollectBufferData
 from utils.plot_f import plot_inference_result, plot_reward_trend
 
 
 class TrainAgent:
-    def __init__(self, env, agent, **kwargs) -> None:
+    def __init__(self, env, agent: RLAgent, **kwargs) -> None:
         self.__dict__.update(**kwargs)
         self.env = env
         self.buffer_data = CollectBufferData(env=self.env, **kwargs)
