@@ -6,6 +6,8 @@ import math
 import numpy as np
 from scipy.integrate import odeint
 
+from env.env import RLEnv
+
 
 def cstr_system(y, t, u):
     """
@@ -82,7 +84,7 @@ def cstr_system(y, t, u):
 #         pass
 
 
-class CSTREnv:
+class CSTREnv(RLEnv):
     def __init__(self, seed: int | None = None, **kwargs) -> None:
         if seed is None:
             self.seed = np.random
