@@ -3,47 +3,14 @@ import torch
 from tensordict import TensorDict
 
 from agent.agent import RLAgent
-
-
-class Actor(torch.nn.Module):
-    def __init__(self, state_dim: int, action_dim: int) -> None:
-        super(Actor, self).__init__()
-        self.actor = torch.nn.Sequential(
-            torch.nn.Linear(state_dim, 64),
-            torch.nn.ReLU(),
-            torch.nn.Linear(64, 32),
-            torch.nn.ReLU(),
-            torch.nn.Linear(32, action_dim),
-        )
-
-    def forward(self, state):
-        return torch.tanh(self.actor(state))
-
-
-class Critic(torch.nn.Module):
-    def __init__(self, state_dim: int, action_dim: int) -> None:
-        super(Critic, self).__init__()
-        self.critic = torch.nn.Sequential(
-            torch.nn.Linear(state_dim + action_dim, 64),
-            torch.nn.ReLU(),
-            torch.nn.Linear(64, 32),
-            torch.nn.ReLU(),
-            torch.nn.Linear(32, 1),
-        )
-
-    def forward(self, state, action):
-        return self.critic(
-            torch.cat(
-                tensors=[state, action],
-                dim=1,
-            ),
-        )
+from agent.model.actor import Actor
+from agent.model.critic import Critic
 
 
 class DeepDeterministicPolicyGradient(RLAgent):
     def __init__(self, **kwargs) -> None:
-        self.start_explore
         self.__dict__.update(**kwargs)
+        self.start_explore
 
         self.actor = Actor(
             self.state_dim,
@@ -88,7 +55,7 @@ class DeepDeterministicPolicyGradient(RLAgent):
 
         return self.actor(state).detach().numpy() + additional_noise
 
-    def update_policy(self, sample_batch: TensorDict):
+    def update_policy(self, sample_batch: TensorDict) -> None:
         # Set yi(next_action_score) = ri + γ * Q_prime(si + 1, µ_prime(si + 1 | θ ^ µ_prime) | θ ^ Q_prime)
         with torch.no_grad():
             td_target = sample_batch.get(
@@ -138,10 +105,7 @@ class DeepDeterministicPolicyGradient(RLAgent):
                     ((1 - self.tau) * actor_prime.data) + self.tau * actor.data
                 )
 
-        return (
-            actor_loss,
-            critic_loss,
-        )
+        return None
 
     def update_lr(self) -> None:
         self.learning_rate = max(

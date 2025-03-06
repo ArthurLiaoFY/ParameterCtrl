@@ -5,33 +5,21 @@ from tensordict import TensorDict
 
 
 class RLAgent(ABC):
-    def __init__(self, **kwargs) -> None:
-        self.start_explore
-        self.__dict__.update(**kwargs)
+    @abstractmethod
+    def select_action(self, state: torch.Tensor): ...
 
     @abstractmethod
-    def select_action(self, state: torch.Tensor):
-        pass
+    def update_policy(self, sample_batch: TensorDict): ...
 
-    @abstractmethod
-    def update_policy(self, sample_batch: TensorDict):
-        pass
-
-    def update_lr(self) -> None:
-        self.learning_rate = max(
-            self.learning_rate_min,
-            self.learning_rate * self.learning_rate_decay_factor,
-        )
+    def update_lr(self) -> None: ...
 
     @property
     @abstractmethod
-    def shutdown_explore(self) -> None:
-        self.explore = False
+    def shutdown_explore(self) -> None: ...
 
     @property
     @abstractmethod
-    def start_explore(self) -> None:
-        self.explore = True
+    def start_explore(self) -> None: ...
 
     @abstractmethod
     def save_network(
@@ -39,8 +27,7 @@ class RLAgent(ABC):
         model_file_path: str,
         prefix: str,
         suffix: str,
-    ):
-        pass
+    ): ...
 
     @abstractmethod
     def load_network(
@@ -48,5 +35,4 @@ class RLAgent(ABC):
         model_file_path: str,
         prefix: str,
         suffix: str,
-    ):
-        pass
+    ): ...
