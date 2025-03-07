@@ -21,24 +21,17 @@ class TrainCartPole:
     def inference_once(self, episode: int):
         self.env.reset()
         inference_reward = 0
-        cnt = 0
 
         self.agent.shutdown_explore
 
         for step in range(self.step_per_episode):
-            action = np.argmax(
-                self.agent.select_action(
-                    state=torch.Tensor(tuple(v for v in self.env.state.values()))
-                ),
+            action = self.agent.select_action(
+                state=torch.Tensor(tuple(v for v in self.env.state.values()))
             )
-            step_loss = self.env.step(action=action)
-            inference_reward += step_loss
-            if step_loss <= self.step_loss_tolerance:
-                cnt += 1
-            else:
-                cnt = 0
-
-            if cnt == self.early_stop_patience:
+            terminated, truncated = self.env.step(action=action)
+            reward = 0 if terminated else 1
+            inference_reward += reward
+            if terminated or truncated:
                 break
 
         # restart explore
@@ -53,33 +46,29 @@ class TrainCartPole:
 
         for episode in range(1, self.n_episodes + 1):
             self.env.reset()
-            episode_loss = 0
+            episode_reward = 0
             current_state_tensor = torch.Tensor(
                 tuple(v for v in self.env.state.values())
             )
-            cnt = 0
             for step in range(self.step_per_episode):
                 # select action
-                action = np.argmax(
-                    self.agent.select_action(
-                        state=torch.Tensor(tuple(v for v in self.env.state.values()))
-                    ),
+                action = self.agent.select_action(
+                    state=torch.Tensor(tuple(v for v in self.env.state.values()))
                 )
 
-                step_loss = self.env.step(action=action)
-                if step_loss <= self.step_loss_tolerance:
-                    cnt += 1
-                else:
-                    cnt = 0
-                episode_loss += step_loss
+                terminated, truncated = self.env.step(action=action)
+                reward = 0 if terminated else 1
+                episode_reward += reward
 
+                # send to buffer
                 next_state_tensor = torch.Tensor(
                     tuple(v for v in self.env.state.values())
                 )
+
                 self.buffer_data.extend_buffer_data(
                     state=current_state_tensor[None, :],
-                    action=torch.Tensor(action)[None, :],
-                    reward=torch.Tensor([step_loss])[None, :],
+                    action=torch.Tensor([action])[None, :],
+                    reward=torch.Tensor([reward])[None, :],
                     next_state=next_state_tensor[None, :],
                 )
                 current_state_tensor = next_state_tensor
@@ -92,15 +81,15 @@ class TrainCartPole:
 
                 self.q_loss_history.append(q_loss.detach().numpy().item())
 
-                if cnt == self.early_stop_patience:
+                if terminated or truncated:
                     break
 
             print(f"episode [{episode}]-------------------------------------------")
-            print(f"episode loss : {round(episode_loss, ndigits=4)}")
+            print(f"episode loss : {round(episode_reward, ndigits=4)}")
             print(f"jitter noise : {round(self.agent.jitter_noise, ndigits=4)}")
             print(f"explore rate : {round(self.agent.explore_rate, ndigits=4)}")
             print(f"learning rate : {round(self.agent.learning_rate, ndigits=4)}")
-            self.episode_reward_traj.append(episode_loss)
+            self.episode_reward_traj.append(episode_reward)
             self.agent.update_lr()
             if episode % self.inference_each_k_episode == 0:
                 self.inference_once(episode)
