@@ -58,7 +58,7 @@ class DeepQNetwork(RLAgent):
                     ((1 - self.tau) * delay_q_network.data) + self.tau * q_network.data
                 )
 
-        return q_loss
+        return q_loss.detach().numpy().item()
 
     def update_lr(self) -> None:
         self.learning_rate = max(
