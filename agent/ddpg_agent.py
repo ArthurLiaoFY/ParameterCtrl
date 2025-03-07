@@ -47,7 +47,7 @@ class DeepDeterministicPolicyGradient(RLAgent):
             amsgrad=True,
         )
 
-    def select_action(self, state: torch.Tensor):
+    def select_action(self, state: tuple):
         if not self.explore:
             additional_noise = np.array([0.0 for _ in range(self.action_dim)])
         else:
@@ -58,7 +58,7 @@ class DeepDeterministicPolicyGradient(RLAgent):
             additional_noise = np.random.randn() * self.jitter_noise
 
         with torch.no_grad():
-            action = self.actor(state).detach().numpy() + additional_noise
+            action = self.actor(torch.Tensor(state)).detach().numpy() + additional_noise
 
         return action
 

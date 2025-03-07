@@ -27,11 +27,10 @@ class DeepQNetwork(RLAgent):
         )
         self.delay_q_network.load_state_dict(self.q_network.state_dict())
 
-    def select_action(self, state: torch.Tensor):
+    def select_action(self, state: tuple):
         if np.random.rand() < self.explore_rate or self.explore:
             with torch.no_grad():
-                action = np.argmax(self.q_network(state).detach().numpy())
-            self.update_er()
+                action = np.argmax(self.q_network(torch.Tensor(state)).detach().numpy())
         else:
             action = np.random.randint(0, self.action_dim)
 
