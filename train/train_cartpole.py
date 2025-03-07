@@ -98,6 +98,7 @@ class TrainAgent:
             print(f"episode [{episode}]-------------------------------------------")
             print(f"episode loss : {round(episode_loss, ndigits=4)}")
             print(f"jitter noise : {round(self.agent.jitter_noise, ndigits=4)}")
+            print(f"explore rate : {round(self.agent.explore_rate, ndigits=4)}")
             print(f"learning rate : {round(self.agent.learning_rate, ndigits=4)}")
             self.episode_reward_traj.append(episode_loss)
             self.agent.update_lr()
