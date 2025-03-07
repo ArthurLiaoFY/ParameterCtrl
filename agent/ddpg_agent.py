@@ -55,7 +55,7 @@ class DeepDeterministicPolicyGradient(RLAgent):
             )
             additional_noise = np.random.randn() * self.jitter_noise
 
-        return self.actor(state).detach().numpy() + additional_noise
+        return (self.actor(state).detach().numpy() + additional_noise).item()
 
     def update_policy(self, sample_batch: TensorDict) -> None:
         # Set yi(next_action_score) = ri + γ * Q_prime(si + 1, µ_prime(si + 1 | θ ^ µ_prime) | θ ^ Q_prime)
@@ -74,6 +74,7 @@ class DeepDeterministicPolicyGradient(RLAgent):
         )
 
         critic_loss = torch.nn.functional.huber_loss(current_reward, td_target)
+
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()

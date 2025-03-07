@@ -35,7 +35,7 @@ class DeepQNetwork(RLAgent):
             )
             additional_noise = np.random.randn() * self.jitter_noise
 
-        return self.actor(state).detach().numpy() + additional_noise
+        return (self.actor(state).detach().numpy() + additional_noise).item()
 
     def update_policy(self, sample_batch: TensorDict) -> None:
         with torch.no_grad():
@@ -46,9 +46,9 @@ class DeepQNetwork(RLAgent):
             )
         current_reward = self.actor(sample_batch.get("state"))
         critic_loss = torch.nn.functional.huber_loss(current_reward, td_target)
-        critic_loss.backward()
 
         self.actor_optimizer.zero_grad()
+        critic_loss.backward()
         self.actor_optimizer.step()
 
         with torch.no_grad():
