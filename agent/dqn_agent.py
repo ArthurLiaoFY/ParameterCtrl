@@ -28,16 +28,17 @@ class DeepQNetwork(RLAgent):
         self.delay_actor.load_state_dict(self.actor.state_dict())
 
     def select_action(self, state: torch.Tensor):
-        if not self.explore:
-            additional_noise = np.array([0.0 for _ in range(self.action_dim)])
-        else:
-            self.jitter_noise = max(
-                self.jitter_noise_min,
-                self.jitter_noise * self.jitter_noise_decay_factor,
+        if np.random.rand() < self.explore_rate or self.explore:
+            with torch.no_grad():
+                action = np.argmax(self.actor(state).detach().numpy())
+            self.explore_rate = max(
+                self.explore_rate_min,
+                self.explore_rate * self.explore_rate_decay_factor,
             )
-            additional_noise = np.random.randn() * self.jitter_noise
+        else:
+            action = np.random.randint(0, self.action_dim)
 
-        return self.actor(state).detach().numpy() + additional_noise
+        return action
 
     def update_policy(self, sample_batch: TensorDict) -> None:
         with torch.no_grad():
