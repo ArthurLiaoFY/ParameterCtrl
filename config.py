@@ -1,13 +1,20 @@
 agent_kwargs = {
     # -------------------------------
     "batch_size": 128,
+    "discount_factor": 0.99,
+    # -------------------------------
     "learning_rate": 1e-2,
     "learning_rate_min": 3e-4,
     "learning_rate_decay_factor": 1 - 1e-3,
-    "discount_factor": 0.99,
+    # -------------------------------
     "jitter_noise": 0.1,
     "jitter_noise_min": 1e-7,
     "jitter_noise_decay_factor": 1 - 2e-5,
+    # -------------------------------
+    "explore_rate": 0.5,
+    "explore_rate_min": 1e-7,
+    "explore_rate_decay_factor": 1 - 2e-5,
+    # -------------------------------
     "tau": 0.001,
     # -------------------------------
 }
