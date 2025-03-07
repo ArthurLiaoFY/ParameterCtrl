@@ -113,7 +113,7 @@ class DeepDeterministicPolicyGradient(RLAgent):
                     ((1 - self.tau) * actor_prime.data) + self.tau * actor.data
                 )
 
-        return None
+        return actor_loss, critic_loss
 
     def update_lr(self) -> None:
         self.learning_rate = max(
