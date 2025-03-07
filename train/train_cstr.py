@@ -21,10 +21,10 @@ class TrainAgent:
         # self.critic_loss_history = []
 
         self.inference_traj = {
-            "ideal_Ca": self.env_kwargs.get("ideal_Ca"),
-            "ideal_Cb": self.env_kwargs.get("ideal_Cb"),
-            "ideal_Tr": self.env_kwargs.get("ideal_Tr"),
-            "ideal_Tk": self.env_kwargs.get("ideal_Tk"),
+            "ideal_Ca": self.cstr_env_kwargs.get("ideal_Ca"),
+            "ideal_Cb": self.cstr_env_kwargs.get("ideal_Cb"),
+            "ideal_Tr": self.cstr_env_kwargs.get("ideal_Tr"),
+            "ideal_Tk": self.cstr_env_kwargs.get("ideal_Tk"),
             "Ca": {},
             "Cb": {},
             "Tr": {},
