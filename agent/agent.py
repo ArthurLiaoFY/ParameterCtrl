@@ -11,7 +11,10 @@ class RLAgent(ABC):
     @abstractmethod
     def update_policy(self, sample_batch: TensorDict): ...
 
+    @abstractmethod
     def update_lr(self) -> None: ...
+
+    def update_er(self) -> None: ...
 
     @property
     @abstractmethod
@@ -20,19 +23,3 @@ class RLAgent(ABC):
     @property
     @abstractmethod
     def start_explore(self) -> None: ...
-
-    @abstractmethod
-    def save_network(
-        self,
-        model_file_path: str,
-        prefix: str,
-        suffix: str,
-    ): ...
-
-    @abstractmethod
-    def load_network(
-        self,
-        model_file_path: str,
-        prefix: str,
-        suffix: str,
-    ): ...
