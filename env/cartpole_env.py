@@ -4,7 +4,7 @@ import numpy as np
 
 class CartPole:
     def __init__(self) -> None:
-        self.env = gym.make("CartPole-v1")
+        self.env = gym.make(id="CartPole-v1", max_episode_steps=200)
         self.reset()
 
     def reset(self) -> None:
@@ -17,12 +17,12 @@ class CartPole:
         )
 
     def step(self, action: tuple[float, float], return_xy: bool = False):
-        state, reward, terminated, truncated, _ = self.env.step(action=action)
-        dict(
+        state, reward, terminated, truncated, infos = self.env.step(action=action)
+        self.state = dict(
             zip(
                 ["CartPosition", "CartVelocity", "PoleAngle", "PoleAngularVelocity"],
                 state,
             )
         )
 
-        return reward
+        return terminated, truncated
