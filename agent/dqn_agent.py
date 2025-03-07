@@ -67,11 +67,12 @@ class DeepQNetwork(RLAgent):
             self.learning_rate * self.learning_rate_decay_factor,
         )
 
-    def update_er(self) -> None:
-        self.explore_rate = max(
-            self.explore_rate_min,
-            self.explore_rate * self.explore_rate_decay_factor,
-        )
+    def update_er(self, episode: int) -> None:
+        if episode > self.fully_explore_step:
+            self.explore_rate = max(
+                self.explore_rate_min,
+                self.explore_rate * self.explore_rate_decay_factor,
+            )
 
     @property
     def shutdown_explore(self) -> None:
