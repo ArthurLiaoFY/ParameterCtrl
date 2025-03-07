@@ -7,7 +7,7 @@ from train.collect_buffer_data import CollectBufferData
 from utils.plot_f import plot_inference_result, plot_reward_trend
 
 
-class TrainAgent:
+class TrainCSTR:
     def __init__(self, env, agent: RLAgent, **kwargs) -> None:
         self.__dict__.update(**kwargs)
         self.env = env
@@ -17,8 +17,8 @@ class TrainAgent:
         self.max_train_reward = -np.inf
 
         self.episode_reward_traj = []
-        # self.actor_loss_history = []
-        # self.critic_loss_history = []
+        self.actor_loss_history = []
+        self.critic_loss_history = []
 
         self.inference_traj = {
             "ideal_Ca": self.cstr_env_kwargs.get("ideal_Ca"),
@@ -110,10 +110,10 @@ class TrainAgent:
                 sample_batch = self.buffer_data.sample_buffer_data(
                     size=self.agent_kwargs.get("batch_size")
                 )
-                self.agent.update_policy(sample_batch)
+                actor_loss, critic_loss = self.agent.update_policy(sample_batch)
 
-                # self.actor_loss_history.append(actor_loss.detach().numpy().item())
-                # self.critic_loss_history.append(critic_loss.detach().numpy().item())
+                self.actor_loss_history.append(actor_loss.detach().numpy().item())
+                self.critic_loss_history.append(critic_loss.detach().numpy().item())
 
                 if cnt == self.early_stop_patience:
                     break

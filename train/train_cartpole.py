@@ -6,7 +6,7 @@ from agent.agent import RLAgent
 from train.collect_buffer_data import CollectBufferData
 
 
-class TrainAgent:
+class TrainCartPole:
     def __init__(self, env, agent: RLAgent, **kwargs) -> None:
         self.__dict__.update(**kwargs)
         self.env = env
@@ -16,6 +16,7 @@ class TrainAgent:
         self.max_train_reward = -np.inf
 
         self.episode_reward_traj = []
+        self.q_loss_history = []
 
     def inference_once(self, episode: int):
         self.env.reset()
@@ -87,10 +88,9 @@ class TrainAgent:
                 sample_batch = self.buffer_data.sample_buffer_data(
                     size=self.agent_kwargs.get("batch_size")
                 )
-                self.agent.update_policy(sample_batch)
+                q_loss = self.agent.update_policy(sample_batch)
 
-                # self.actor_loss_history.append(actor_loss.detach().numpy().item())
-                # self.critic_loss_history.append(critic_loss.detach().numpy().item())
+                self.q_loss_history.append(q_loss.detach().numpy().item())
 
                 if cnt == self.early_stop_patience:
                     break
