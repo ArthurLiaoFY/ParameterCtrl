@@ -1,11 +1,12 @@
 from collections import defaultdict
 
 import numpy as np
+from tensordict import TensorDict
 
 from agent.agent import RLAgent
 
 
-class Agent(RLAgent):
+class QAgent(RLAgent):
     def __init__(self, state_dim, action_dim, **kwargs) -> None:
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -14,46 +15,42 @@ class Agent(RLAgent):
 
         self.q_table = defaultdict(lambda: np.zeros(self.action_dim))
 
-    def select_action_idx(self, state: tuple) -> int:
+    def select_action(self, state: tuple) -> int:
         if self.explore and np.random.rand() <= self.explore_rate:
-            action_idx = np.random.choice(self.action_dim)
+            action = np.random.choice(self.action_dim)
 
         else:
-            action_idx = np.argmax(self.q_table.get(state))
-        return action_idx
+            action = np.argmax(self.q_table.get(state))
+        return action
 
-    def action_idx_to_action(self, action_idx: int) -> tuple:
-        return self.action_mapping_dict.get(action_idx)
+    def update_policy(self, sample_batch: TensorDict) -> None:
+        for state, action, reward, next_state in zip(
+            sample_batch["state"].tolist(),
+            sample_batch["action"].tolist(),
+            sample_batch["reward"].tolist(),
+            sample_batch["next_state"].tolist(),
+        ):
+            td_target = (
+                reward
+                + self.discount_factor
+                * self.q_table[tuple(next_state)][
+                    np.argmax(self.q_table[tuple(next_state)])
+                ]
+            )
 
-    def select_action(self, state: tuple):
-        action_idx = self.select_action_idx(state=state)
-        return self.action_idx_to_action(action_idx=action_idx)
-
-    def update_policy(
-        self,
-        state_tuple: tuple,
-        action_idx: int,
-        reward: float,
-        next_state_tuple: tuple,
-    ) -> None:
-        td_target = (
-            reward
-            + self.discount_factor
-            * self.q_table[next_state_tuple][np.argmax(self.q_table[next_state_tuple])]
-        )
-
-        td_error = td_target - self.q_table[state_tuple][action_idx]
-        self.q_table[state_tuple][action_idx] += self.learning_rate * td_error
+            td_error = td_target - self.q_table[tuple(state)][int(action[0])]
+            self.q_table[tuple(state)][int(action[0])] += self.learning_rate * td_error
 
     def update_lr(self) -> None:
         self.learning_rate = max(
-            self.learning_rate_min, self.learning_rate * self.learning_rate_decay
+            self.learning_rate_min, self.learning_rate * self.learning_rate_decay_factor
         )
 
     def update_er(self, episode: int = 0) -> None:
         if episode > self.fully_explore_step:
             self.explore_rate = max(
-                self.explore_rate_min, self.explore_rate * self.explore_rate_decay
+                self.explore_rate_min,
+                self.explore_rate * self.explore_rate_decay_factor,
             )
 
     @property
