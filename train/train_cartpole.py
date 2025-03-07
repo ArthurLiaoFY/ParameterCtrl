@@ -91,6 +91,7 @@ class TrainCartPole:
             print(f"learning rate : {round(self.agent.learning_rate, ndigits=4)}")
             self.episode_reward_traj.append(episode_reward)
             self.agent.update_lr()
+            self.agent.update_er(episode=episode)
             if episode % self.inference_each_k_episode == 0:
                 self.inference_once(episode)
                 if save_traj_to_buffer:
