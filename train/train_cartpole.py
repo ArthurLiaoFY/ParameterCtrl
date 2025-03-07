@@ -25,13 +25,10 @@ class TrainAgent:
         self.agent.shutdown_explore
 
         for step in range(self.step_per_episode):
-            action = (
-                0
-                if self.agent.select_action(
+            action = np.argmax(
+                self.agent.select_action(
                     state=torch.Tensor(tuple(v for v in self.env.state.values()))
-                )
-                < 0.5
-                else 1
+                ),
             )
             step_loss = self.env.step(action=action)
             inference_reward += step_loss
@@ -62,10 +59,10 @@ class TrainAgent:
             cnt = 0
             for step in range(self.step_per_episode):
                 # select action
-                action = (
-                    0
-                    if self.agent.select_action(state=current_state_tensor) < 0.5
-                    else 1
+                action = np.argmax(
+                    self.agent.select_action(
+                        state=torch.Tensor(tuple(v for v in self.env.state.values()))
+                    ),
                 )
 
                 step_loss = self.env.step(action=action)
