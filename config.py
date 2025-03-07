@@ -11,6 +11,7 @@ agent_kwargs = {
     "jitter_noise_min": 1e-7,
     "jitter_noise_decay_factor": 1 - 2e-5,
     # -------------------------------
+    "fully_explore_step": 5000,
     "explore_rate": 0.5,
     "explore_rate_min": 1e-7,
     "explore_rate_decay_factor": 1 - 2e-5,
