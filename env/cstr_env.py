@@ -67,6 +67,21 @@ def cstr_system(y, t, u):
     return dC_adt, dC_bdt, dT_Rdt, dT_Kdt
 
 
+# class Env:
+#     def __init__(self, seed: int | None = None, **kwargs):
+#         if seed is None:
+#             self.seed = np.random
+#         else:
+#             self.seed = np.random.RandomState(seed)
+#         self.__dict__.update(**kwargs)
+
+#     def reset(self):
+#         pass
+
+#     def step(self):
+#         pass
+
+
 class CSTREnv:
     def __init__(self, seed: int | None = None, **kwargs) -> None:
         if seed is None:
@@ -139,7 +154,7 @@ class CSTREnv:
     def revert_normed_action(self, normed_action):
         return normed_action * np.array([abs(self.init_F), abs(self.init_Q)])
 
-    def step(self, action: tuple[float, float], return_xy: bool = False):
+    def step(self, action: tuple[float, float]):
         # new action
         new_F = np.clip(
             a=self.F_traj[-1] + action[0],
@@ -172,10 +187,10 @@ class CSTREnv:
 
         # reward
         reward = -1 * (
-            (abs(self.ideal_Ca - new_Ca) / self.ideal_Ca)
-            + (abs(self.ideal_Cb - new_Cb) / self.ideal_Cb)
-            + (abs(self.ideal_Tr - new_Tr) / self.ideal_Tr)
-            + (abs(self.ideal_Tk - new_Tk) / self.ideal_Tk)
+            abs((self.ideal_Ca - new_Ca) / self.ideal_Ca)
+            + abs((self.ideal_Cb - new_Cb) / self.ideal_Cb)
+            + abs((self.ideal_Tr - new_Tr) / self.ideal_Tr)
+            + abs((self.ideal_Tk - new_Tk) / self.ideal_Tk)
         )
 
         # update state
@@ -202,7 +217,4 @@ class CSTREnv:
         self.F_traj.append(new_F)
         self.Q_traj.append(new_Q)
 
-        if return_xy:
-            return (reward, new_Ca, new_Cb, new_Tr, new_Tk, new_F, new_Q)
-        else:
-            return reward
+        return reward
