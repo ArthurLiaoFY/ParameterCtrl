@@ -6,8 +6,6 @@ import math
 import numpy as np
 from scipy.integrate import odeint
 
-from env.env import RLEnv
-
 
 def cstr_system(y, t, u):
     """
@@ -84,7 +82,7 @@ def cstr_system(y, t, u):
 #         pass
 
 
-class CSTREnv(RLEnv):
+class CSTREnv:
     def __init__(self, seed: int | None = None, **kwargs) -> None:
         if seed is None:
             self.seed = np.random
@@ -156,7 +154,7 @@ class CSTREnv(RLEnv):
     def revert_normed_action(self, normed_action):
         return normed_action * np.array([abs(self.init_F), abs(self.init_Q)])
 
-    def step(self, action: tuple[float, float], return_xy: bool = False):
+    def step(self, action: tuple[float, float]):
         # new action
         new_F = np.clip(
             a=self.F_traj[-1] + action[0],
@@ -219,7 +217,4 @@ class CSTREnv(RLEnv):
         self.F_traj.append(new_F)
         self.Q_traj.append(new_Q)
 
-        if return_xy:
-            return (reward, new_Ca, new_Cb, new_Tr, new_Tk, new_F, new_Q)
-        else:
-            return reward
+        return reward

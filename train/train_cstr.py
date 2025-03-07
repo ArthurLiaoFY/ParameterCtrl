@@ -17,8 +17,8 @@ class TrainAgent:
         self.max_train_reward = -np.inf
 
         self.episode_reward_traj = []
-        self.actor_loss_history = []
-        self.critic_loss_history = []
+        # self.actor_loss_history = []
+        # self.critic_loss_history = []
 
         self.inference_traj = {
             "ideal_Ca": self.env_kwargs.get("ideal_Ca"),
