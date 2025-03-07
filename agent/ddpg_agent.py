@@ -8,7 +8,9 @@ from agent.model.critic import Critic
 
 
 class DeepDeterministicPolicyGradient(RLAgent):
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, state_dim, action_dim, **kwargs) -> None:
+        self.state_dim = state_dim
+        self.action_dim = action_dim
         self.__dict__.update(**kwargs)
         self.start_explore
 
@@ -55,7 +57,7 @@ class DeepDeterministicPolicyGradient(RLAgent):
             )
             additional_noise = np.random.randn() * self.jitter_noise
 
-        return (self.actor(state).detach().numpy() + additional_noise).item()
+        return self.actor(state).detach().numpy() + additional_noise
 
     def update_policy(self, sample_batch: TensorDict) -> None:
         # Set yi(next_action_score) = ri + γ * Q_prime(si + 1, µ_prime(si + 1 | θ ^ µ_prime) | θ ^ Q_prime)

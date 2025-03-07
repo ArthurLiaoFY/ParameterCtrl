@@ -7,7 +7,9 @@ from agent.model.actor import Actor
 
 
 class DeepQNetwork(RLAgent):
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, state_dim, action_dim, **kwargs) -> None:
+        self.state_dim = state_dim
+        self.action_dim = action_dim
         self.__dict__.update(**kwargs)
         self.start_explore
         # policy net
@@ -35,7 +37,7 @@ class DeepQNetwork(RLAgent):
             )
             additional_noise = np.random.randn() * self.jitter_noise
 
-        return (self.actor(state).detach().numpy() + additional_noise).item()
+        return self.actor(state).detach().numpy() + additional_noise
 
     def update_policy(self, sample_batch: TensorDict) -> None:
         with torch.no_grad():
