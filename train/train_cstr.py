@@ -112,8 +112,8 @@ class TrainCSTR:
                 )
                 actor_loss, critic_loss = self.agent.update_policy(sample_batch)
 
-                self.actor_loss_history.append(actor_loss.detach().numpy().item())
-                self.critic_loss_history.append(critic_loss.detach().numpy().item())
+                self.actor_loss_history.append(actor_loss)
+                self.critic_loss_history.append(critic_loss)
 
                 if cnt == self.early_stop_patience:
                     break

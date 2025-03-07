@@ -79,7 +79,7 @@ class TrainCartPole:
                 )
                 q_loss = self.agent.update_policy(sample_batch)
 
-                self.q_loss_history.append(q_loss.detach().numpy().item())
+                self.q_loss_history.append(q_loss)
 
                 if terminated or truncated:
                     break
